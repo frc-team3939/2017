@@ -127,7 +127,7 @@ public class Robot extends IterativeRobot {
         /* choose the sensor and sensor direction */
         kGearRight.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
         kGearRight.reverseSensor(false);
-        //kGearRight.configEncoderCodesPerRev(XXX), // if using FeedbackDevice.QuadEncoder
+        kGearRight.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
         //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
         /* set the peak and nominal outputs, 12V means full */
@@ -153,7 +153,7 @@ public class Robot extends IterativeRobot {
         /* choose the sensor and sensor direction */
         kGearLeft.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
         kGearLeft.reverseSensor(false);
-        //kGearLeft.configEncoderCodesPerRev(XXX), // if using FeedbackDevice.QuadEncoder
+        kGearLeft.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
         //kGearLeft.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
         /* set the peak and nominal outputs, 12V means full */
@@ -372,7 +372,12 @@ public class Robot extends IterativeRobot {
 			// movement, and Z axis for rotation.
 			// This sample does not use field-oriented drive, so the gyro input
 			// is set to zero.
-			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), 0);
+			
+			//regular drive
+			//robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), 0);
+			
+			//field drive
+			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
 
 			
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles

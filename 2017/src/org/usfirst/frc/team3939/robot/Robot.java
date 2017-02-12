@@ -406,7 +406,7 @@ public class Robot extends IterativeRobot {
 	        	  stopClimb();
 	          }
 	          if (stick.getRawButton(9)) {
-	        	  reverseClimb();
+	        	  //reverseClimb();
 	          }
 	         
 	          

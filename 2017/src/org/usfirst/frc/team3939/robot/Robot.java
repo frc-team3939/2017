@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Encoder;
 
 
 
@@ -53,6 +54,7 @@ public class Robot extends IterativeRobot {
 	
 	Talon ShooterMotor; 
 	double ShooterPower = 0;
+	Servo ShooterStop;
 	
 	Talon IntakeMotor; 
 	double IntakePower = 0.25;
@@ -63,8 +65,7 @@ public class Robot extends IterativeRobot {
 	Talon Climb1Motor, Climb2Motor; 
 	double ClimbPower = 1;
 
-	
-	Servo ShooterStop;
+	Encoder RightGearEnc, LeftGearEnc;
 	
 	// The channel on the driver station that the joystick is connected to
 	final int kJoystickChannel = 0;
@@ -113,10 +114,27 @@ public class Robot extends IterativeRobot {
 	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
 	      }
 		
-		
+		SetupGearEncoders();
 	}
 
-	
+	public void SetupGearEncoders() {
+		RightGearEnc = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+		RightGearEnc.setMaxPeriod(.1);
+		RightGearEnc.setMinRate(10);
+		RightGearEnc.setDistancePerPulse(5);
+		RightGearEnc.setReverseDirection(true);
+		RightGearEnc.setSamplesToAverage(7);
+		RightGearEnc.reset();
+		
+		LeftGearEnc = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
+		LeftGearEnc.setMaxPeriod(.1);
+		LeftGearEnc.setMinRate(10);
+		LeftGearEnc.setDistancePerPulse(5);
+		LeftGearEnc.setReverseDirection(true);
+		LeftGearEnc.setSamplesToAverage(7);
+		LeftGearEnc.reset();
+		
+	}
 	public void startintake() {
 		IntakeMotor.set(IntakePower); 
     }
@@ -153,7 +171,6 @@ public class Robot extends IterativeRobot {
 		Climb2Motor.set(-ClimbPower); 
     }
 
-	
 	public void startshooter() {
 		ShooterPower = 1; //set shooter power level
 		ShooterMotor.set(ShooterPower); 
@@ -161,14 +178,12 @@ public class Robot extends IterativeRobot {
     	ShooterStop.set(0.5); //Shooter Servo location
     	//need to start conveyor
     }
-	
 	public void stopshooter() {
 		//need to stop conveyor
 		ShooterStop.set(0.9); //Shooter Servo location
 		//Timer.delay(3.0);
     	ShooterMotor.stopMotor();			
 	}
-	
 	
 	public void smartDashBoardBsetup() {
 		chooser.addDefault("Default Auto", defaultAuto);
@@ -232,7 +247,6 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putData("HeightOffset", HeightOffset);
     	*/
 	}
-
 	public void smartDashBoardDisplay() {
         /* Display 6-axis Processed Angle Data                                      */
         SmartDashboard.putBoolean(  "IMU_Connected",        ahrs.isConnected());

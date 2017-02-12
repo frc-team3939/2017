@@ -52,8 +52,18 @@ public class Robot extends IterativeRobot {
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
 	Talon ShooterMotor; 
-	int ShooterPower = 0;
+	double ShooterPower = 0;
+	
+	Talon IntakeMotor; 
+	double IntakePower = 0.25;
 
+	Talon RightConveyorMotor, LeftConveyorMotor; 
+	double ConveyorPower = 1;
+
+	Talon Climb1Motor, Climb2Motor; 
+	double ClimbPower = 1;
+
+	
 	Servo ShooterStop;
 	
 	// The channel on the driver station that the joystick is connected to
@@ -73,8 +83,16 @@ public class Robot extends IterativeRobot {
 		ShooterStop = new Servo(1);  //ShooterStop
 		ShooterStop.set(.9); // set start location
 
-		ShooterMotor = new Talon(0); 
+		ShooterMotor = new Talon(0); //set PMW Location
 		
+		IntakeMotor = new Talon(1); //set PMW Location
+		
+		RightConveyorMotor = new Talon(2); //set PMW Location
+		LeftConveyorMotor = new Talon(3); //set PMW Location
+
+		Climb1Motor = new Talon(4); //set PMW Location
+		Climb2Motor = new Talon(5); //set PMW Location
+
 		robotDrive = new RobotDrive(kFrontLeftChannel, kRearLeftChannel, kFrontRightChannel, kRearRightChannel);
 		robotDrive.setInvertedMotor(MotorType.kFrontLeft, true); // invert the
 																	// left side
@@ -99,6 +117,41 @@ public class Robot extends IterativeRobot {
 	}
 
 	
+	public void startintake() {
+		IntakeMotor.set(IntakePower); 
+    }
+	public void stopintake() {
+		IntakeMotor.stopMotor();
+    }
+	public void reverseintake() {
+		IntakeMotor.set(-IntakePower); 
+    }
+
+	public void startConveyor() {
+		RightConveyorMotor.set(ConveyorPower); 
+		LeftConveyorMotor.set(ConveyorPower); 
+    }
+	public void stopConveyor() {
+		RightConveyorMotor.stopMotor();
+		LeftConveyorMotor.stopMotor();
+    }
+	public void reverseConveyor() {
+		RightConveyorMotor.set(-ConveyorPower); 
+		LeftConveyorMotor.set(-ConveyorPower); 
+    }
+
+	public void startClimb() {
+		Climb1Motor.set(ClimbPower); 
+		Climb2Motor.set(ClimbPower); 
+    }
+	public void stopClimb() {
+		Climb1Motor.stopMotor();
+		Climb2Motor.stopMotor();
+    }
+	public void reverseClimb() {
+		Climb1Motor.set(-ClimbPower); 
+		Climb2Motor.set(-ClimbPower); 
+    }
 
 	
 	public void startshooter() {
@@ -328,6 +381,34 @@ public class Robot extends IterativeRobot {
 
 	          smartDashBoardDisplay();
 	          
+	          if (stick.getRawButton(1)) {
+	        	  startintake();
+	          }
+	          if (stick.getRawButton(2)) {
+	        	  stopintake();
+	          }
+	          if (stick.getRawButton(3)) {
+	        	  reverseintake();
+	          }
+	          if (stick.getRawButton(4)) {
+	        	  startConveyor();
+	          }
+	          if (stick.getRawButton(5)) {
+	        	  stopConveyor();
+	          }
+	          if (stick.getRawButton(6)) {
+	        	  reverseConveyor();
+	          }
+	          if (stick.getRawButton(7)) {
+	        	  startClimb();
+	          }
+	          if (stick.getRawButton(8)) {
+	        	  stopClimb();
+	          }
+	          if (stick.getRawButton(9)) {
+	        	  reverseClimb();
+	          }
+	         
 	          
 		}
 	}

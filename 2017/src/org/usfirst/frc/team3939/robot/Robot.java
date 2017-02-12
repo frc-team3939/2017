@@ -51,9 +51,6 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	CANTalon kGearRight = new CANTalon(50);
-	CANTalon kGearLeft = new CANTalon(51);
-	
 	Talon ShooterMotor; 
 	int ShooterPower = 0;
 
@@ -98,80 +95,11 @@ public class Robot extends IterativeRobot {
 	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
 	      }
 		
-		initTalonEncoders();
-		
-		 
-
-		
 		
 	}
 
-	/**
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * getString line to get the auto name from the text box below the Gyro
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the
-	 * switch structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
-	 */
 	
-	public void initTalonEncoders(){
-		/* lets grab the 360 degree position of the MagEncoder's absolute position */
-		int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
-        /* use the low level API to set the quad encoder signal */
-		kGearRight.setEncPosition(absolutePositionRight);
-        
-        /* choose the sensor and sensor direction */
-        kGearRight.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
-        kGearRight.reverseSensor(false);
-        kGearRight.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
-        //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
-        /* set the peak and nominal outputs, 12V means full */
-        kGearRight.configNominalOutputVoltage(+0f, -0f);
-        kGearRight.configPeakOutputVoltage(+12f, -12f);
-        /* set the allowable closed-loop error,
-         * Closed-Loop output will be neutral within this range.
-         * See Table in Section 17.2.1 for native units per rotation. 
-         */
-        kGearRight.setAllowableClosedLoopErr(0); /* always servo */
-        /* set closed loop gains in slot0 */
-        kGearRight.setProfile(0);
-        kGearRight.setF(0.0);
-        kGearRight.setP(0.1);
-        kGearRight.setI(0.0); 
-        kGearRight.setD(0.0);   
-        
-        /* lets grab the 360 degree position of the MagEncoder's absolute position */
-		int absolutePositionLeft = kGearLeft.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
-        /* use the low level API to set the quad encoder signal */
-        kGearLeft.setEncPosition(absolutePositionLeft);
-        
-        /* choose the sensor and sensor direction */
-        kGearLeft.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
-        kGearLeft.reverseSensor(false);
-        kGearLeft.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
-        //kGearLeft.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
-
-        /* set the peak and nominal outputs, 12V means full */
-        kGearLeft.configNominalOutputVoltage(+0f, -0f);
-        kGearLeft.configPeakOutputVoltage(+12f, -12f);
-        /* set the allowable closed-loop error,
-         * Closed-Loop output will be neutral within this range.
-         * See Table in Section 17.2.1 for native units per rotation. 
-         */
-        kGearLeft.setAllowableClosedLoopErr(0); /* always servo */
-        /* set closed loop gains in slot0 */
-        kGearLeft.setProfile(0);
-        kGearLeft.setF(0.0);
-        kGearLeft.setP(0.1);
-        kGearLeft.setI(0.0); 
-        kGearLeft.setD(0.0);    
-
-	}
 	
 	public void startshooter() {
 		ShooterPower = 1; //set shooter power level
@@ -335,7 +263,18 @@ public class Robot extends IterativeRobot {
 	
 	
 	
-	
+	/**
+	 * This autonomous (along with the chooser code above) shows how to select
+	 * between different autonomous modes using the dashboard. The sendable
+	 * chooser code works with the Java SmartDashboard. If you prefer the
+	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
+	 * getString line to get the auto name from the text box below the Gyro
+	 *
+	 * You can add additional auto modes by adding additional comparisons to the
+	 * switch structure below with additional strings. If using the
+	 * SendableChooser make sure to add them to the chooser code above as well.
+	 */
+
 	@Override
 	public void autonomousInit() {
 		autoSelected = chooser.getSelected();

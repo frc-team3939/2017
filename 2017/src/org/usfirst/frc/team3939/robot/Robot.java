@@ -54,8 +54,8 @@ public class Robot extends IterativeRobot {
 	Talon ShooterMotor; 
 	double ShooterPower = 0;
 	
-	Talon IntakeMotor; 
-	double IntakePower = 0.25;
+	CANTalon IntakeMotor = new CANTalon(23); 
+	double IntakePower = 0.5;
 
 	Talon RightConveyorMotor, LeftConveyorMotor; 
 	double ConveyorPower = 1;
@@ -80,12 +80,10 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		smartDashBoardBsetup();
 		
-		ShooterStop = new Servo(1);  //ShooterStop
-		ShooterStop.set(.9); // set start location
+		ShooterStop = new Servo(9);  //ShooterStop
+		//ShooterStop.set(.9); // set start location
 
 		ShooterMotor = new Talon(0); //set PMW Location
-		
-		IntakeMotor = new Talon(1); //set PMW Location
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(3); //set PMW Location
@@ -118,18 +116,18 @@ public class Robot extends IterativeRobot {
 
 	
 	public void startintake() {
-		IntakeMotor.set(IntakePower); 
+		IntakeMotor.set(-IntakePower); 
     }
 	public void stopintake() {
 		IntakeMotor.stopMotor();
     }
 	public void reverseintake() {
-		IntakeMotor.set(-IntakePower); 
+		IntakeMotor.set(IntakePower); 
     }
 
 	public void startConveyor() {
 		RightConveyorMotor.set(ConveyorPower); 
-		LeftConveyorMotor.set(ConveyorPower); 
+		LeftConveyorMotor.set(-ConveyorPower); 
     }
 	public void stopConveyor() {
 		RightConveyorMotor.stopMotor();
@@ -311,7 +309,9 @@ public class Robot extends IterativeRobot {
         /* Connectivity Debugging Support                                           */
         SmartDashboard.putNumber(   "IMU_Byte_Count",       ahrs.getByteCount());
         SmartDashboard.putNumber(   "IMU_Update_Count",     ahrs.getUpdateCount());
-		
+        
+        SmartDashboard.putNumber(   "ShooterStop",          ShooterStop.getPosition());
+        
 	}
 	
 	
@@ -381,34 +381,41 @@ public class Robot extends IterativeRobot {
 
 	          smartDashBoardDisplay();
 	          
-	          if (stick.getRawButton(1)) {
+	          if (stick.getRawButton(7)) {
 	        	  startintake();
 	          }
-	          if (stick.getRawButton(2)) {
+	          if (stick.getRawButton(8)) {
 	        	  stopintake();
 	          }
-	          if (stick.getRawButton(3)) {
+	          if (stick.getRawButton(11)) {
 	        	  reverseintake();
 	          }
-	          if (stick.getRawButton(4)) {
+	          if (stick.getRawButton(9)) {
 	        	  startConveyor();
 	          }
-	          if (stick.getRawButton(5)) {
+	          if (stick.getRawButton(10)) {
 	        	  stopConveyor();
 	          }
 	          if (stick.getRawButton(6)) {
-	        	  reverseConveyor();
+	        	//  reverseConveyor();
 	          }
 	          if (stick.getRawButton(7)) {
-	        	  startClimb();
+	        //	  startClimb();
 	          }
 	          if (stick.getRawButton(8)) {
-	        	  stopClimb();
+	        //	  stopClimb();
 	          }
 	          if (stick.getRawButton(9)) {
 	        	  //reverseClimb();
 	          }
-	         
+	          if (stick.getRawButton(2)) {
+	        	  ShooterStop.set(.55); 
+	        	  
+	          }
+	          if (stick.getRawButton(3)) {
+	        	 ShooterStop.set(.7); 
+	        	  
+	          }
 	          
 		}
 	}

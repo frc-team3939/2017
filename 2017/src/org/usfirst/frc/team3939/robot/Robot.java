@@ -369,7 +369,7 @@ public class Robot extends IterativeRobot {
 			//robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), 0);
 			
 			//field drive
-			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
+			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), /*ahrs.getAngle()*/ stick.getTwist());
 
 			
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles

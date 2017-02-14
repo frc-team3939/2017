@@ -5,6 +5,8 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.RobotDrive.MotorType;
 import edu.wpi.first.wpilibj.Timer;
@@ -34,7 +36,7 @@ import edu.wpi.first.wpilibj.Encoder;
  * creating this project, you must also update the manifest file in the resource
  * directory.
  */
-public class Robot extends IterativeRobot {
+public class Robot extends IterativeRobot implements PIDOutput{
 	AHRS ahrs;
 	final String defaultAuto = "Default";
 	final String customAuto = "My Auto";
@@ -45,6 +47,16 @@ public class Robot extends IterativeRobot {
     SendableChooser<String> shooterSpeed = new SendableChooser();
     SendableChooser<String> HeightOffset = new SendableChooser();
     SendableChooser<String> atomtype = new SendableChooser();
+    
+    //turn to an angle
+    PIDController turnController;
+    double rotateToAngleRate;
+    static final double kP = 0.03;
+    static final double kI = 0.00;
+    static final double kD = 0.00;
+    static final double kF = 0.00;
+    
+    static final double kToleranceDegrees = 2.0f;
     
     //Drive To distance
 	public static final double WHEEL_DIAMETER = 4; //Will need to be set before use
@@ -83,6 +95,13 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		smartDashBoardBsetup();
+		
+		//Turn to angle
+        turnController = new PIDController(kP, kI, kD, kF, ahrs, this);
+        turnController.setInputRange(-180.0f,  180.0f);
+        turnController.setOutputRange(-1.0, 1.0);
+        turnController.setAbsoluteTolerance(kToleranceDegrees);
+        turnController.setContinuous(true);
 		
 		ShooterStop = new Servo(1);  //ShooterStop
 		ShooterStop.set(.9); // set start location
@@ -367,6 +386,7 @@ public class Robot extends IterativeRobot {
 		switch (autoSelected) {
 		case customAuto:
 			// Put custom auto code here
+	        double currentRotationRate;
 			//Drive Forward 5' thearetical
 	        double encoderDistanceReading = encoder.getDistance();
 		SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
@@ -374,6 +394,19 @@ public class Robot extends IterativeRobot {
 		robotDrive.mecanumDrive_Cartesian(.75, 0, 0, 0);
 		if (encoderDistanceReading > 60) //60 is number of inches to travel
 			robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
+        
+		ahrs.zeroYaw();
+        turnController.setSetpoint(90.0f);
+        turnController.enable();
+        currentRotationRate = rotateToAngleRate;
+        /* Use the joystick X axis for lateral movement,         
+        Y axis for forward movement, and the current          
+        calculated rotation rate (or joystick Z axis),        
+        depending upon whether "rotate to angle" is active.    */
+        robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),currentRotationRate, ahrs.getAngle());
+        
+		
+		
 			
 			
 			break;
@@ -423,5 +456,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 	}
+    @Override
+    /* This function is invoked periodically by the PID Controller, */
+    /* based upon navX MXP yaw angle input and PID Coefficients.    */
+    public void pidWrite(double output) {
+        rotateToAngleRate = output;
+    }
 }
 

@@ -54,6 +54,10 @@ public class Robot extends IterativeRobot {
 	CANTalon kGearRight = new CANTalon(50);
 	CANTalon kGearLeft = new CANTalon(51);
 	
+	double OpenPosition = .25; //gear open position
+	double ClosedPosition = 0; //gear open position
+	
+	
 	Talon ShooterMotor; 
 	int ShooterPower = 0;
 
@@ -112,7 +116,7 @@ public class Robot extends IterativeRobot {
         /* choose the sensor and sensor direction */
         kGearRight.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
         kGearRight.reverseSensor(false);
-        //kGearRight.configEncoderCodesPerRev(XXX), // if using FeedbackDevice.QuadEncoder
+        kGearRight.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
         //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
         /* set the peak and nominal outputs, 12V means full */
@@ -138,7 +142,7 @@ public class Robot extends IterativeRobot {
         /* choose the sensor and sensor direction */
         kGearLeft.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
         kGearLeft.reverseSensor(false);
-        //kGearLeft.configEncoderCodesPerRev(XXX), // if using FeedbackDevice.QuadEncoder
+        kGearLeft.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
         //kGearLeft.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
         /* set the peak and nominal outputs, 12V means full */
@@ -156,6 +160,21 @@ public class Robot extends IterativeRobot {
         kGearLeft.setI(0.0); 
         kGearLeft.setD(0.0);    
 
+		kGearRight.changeControlMode(TalonControlMode.Position);
+		kGearLeft.changeControlMode(TalonControlMode.Position);
+		kGearRight.reset();
+		kGearLeft.reset();
+
+	}
+	
+	public void opengears() {
+		kGearRight.set(OpenPosition); 
+		kGearLeft.set(OpenPosition); 
+	}
+	
+	public void closegears() {
+		kGearRight.set(ClosedPosition); 
+		kGearLeft.changeControlMode(TalonControlMode.Position);
 	}
 	
 	public void startshooter() {

@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
@@ -79,6 +80,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		smartDashBoardBsetup();
+		
+		CameraServer.getInstance().startAutomaticCapture(); //connect usb camera to dashboard
 		
 		ShooterStop = new Servo(9);  //ShooterStop
 		//ShooterStop.set(.9); // set start location

@@ -55,7 +55,7 @@ public class Robot extends IterativeRobot {
 	double ShooterPower = 0;
 	
 	CANTalon IntakeMotor = new CANTalon(23); 
-	double IntakePower = 0.35;
+	double IntakePower = 0.5;
 
 	Talon RightConveyorMotor, LeftConveyorMotor; 
 	double ConveyorPower = 1;
@@ -65,6 +65,9 @@ public class Robot extends IterativeRobot {
 
 	
 	Servo ShooterStop;
+	double ShooterStopClosedLoc = .55;
+	double ShooterStopOpenLoc = .7;
+	 
 	
 	// The channel on the driver station that the joystick is connected to
 	final int kJoystickChannel = 0;
@@ -80,8 +83,8 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		smartDashBoardBsetup();
 		
-		ShooterStop = new Servo(9);  //ShooterStop
-		//ShooterStop.set(.9); // set start location
+		ShooterStop = new Servo(8);  //ShooterStop
+		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
 		ShooterMotor = new Talon(0); //set PMW Location
 		
@@ -156,13 +159,13 @@ public class Robot extends IterativeRobot {
 		ShooterPower = 1; //set shooter power level
 		ShooterMotor.set(ShooterPower); 
     	//Timer.delay(3.0);
-    	ShooterStop.set(0.5); //Shooter Servo location
+    	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
     	//need to start conveyor
     }
 	
 	public void stopshooter() {
 		//need to stop conveyor
-		ShooterStop.set(0.9); //Shooter Servo location
+		ShooterStop.set(ShooterStopClosedLoc); //Shooter Servo location
 		//Timer.delay(3.0);
     	ShooterMotor.stopMotor();			
 	}
@@ -409,11 +412,11 @@ public class Robot extends IterativeRobot {
 	        	  //reverseClimb();
 	          }
 	          if (stick.getRawButton(2)) {
-	        	  ShooterStop.set(.55); 
+	        	  ShooterStop.set(ShooterStopClosedLoc); 
 	        	  
 	          }
 	          if (stick.getRawButton(3)) {
-	        	 ShooterStop.set(.7); 
+	        	 ShooterStop.set(ShooterStopOpenLoc); 
 	        	  
 	          }
 	          

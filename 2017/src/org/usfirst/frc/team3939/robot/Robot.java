@@ -51,10 +51,10 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	CANTalon kGearRight = new CANTalon(50);
+	CANTalon kGearRight = new CANTalon(25);
 	CANTalon kGearLeft = new CANTalon(51);
 	
-	double OpenPosition = .25; //gear open position
+	double OpenPosition = 0.5; //gear open position
 	double ClosedPosition = 0; //gear open position
 	
 	
@@ -130,7 +130,7 @@ public class Robot extends IterativeRobot {
         /* set closed loop gains in slot0 */
         kGearRight.setProfile(0);
         kGearRight.setF(0.0);
-        kGearRight.setP(0.1);
+        kGearRight.setP(1.0);
         kGearRight.setI(0.0); 
         kGearRight.setD(0.0);   
         
@@ -156,7 +156,7 @@ public class Robot extends IterativeRobot {
         /* set closed loop gains in slot0 */
         kGearLeft.setProfile(0);
         kGearLeft.setF(0.0);
-        kGearLeft.setP(0.1);
+        kGearLeft.setP(1.0);
         kGearLeft.setI(0.0); 
         kGearLeft.setD(0.0);    
 
@@ -404,6 +404,14 @@ public class Robot extends IterativeRobot {
 
 	          smartDashBoardDisplay();
 	          
+	          if (stick.getRawButton(7)) {
+	  	        //	  startClimb();
+	        	  opengears();
+	  	      }
+	  	      if (stick.getRawButton(8)) {
+	  	        //	  stopClimb();
+	  	    	  closegears();
+	  	      }
 	          
 		}
 	}

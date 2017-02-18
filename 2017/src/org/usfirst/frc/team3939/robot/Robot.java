@@ -363,8 +363,29 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		
 	}
 	
+	public void forward(double Distance){
+		//Drive Forward 5' thearetical
+        double encoderDistanceReading = encoder.getDistance();
+	SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
 	
+	robotDrive.mecanumDrive_Cartesian(.75, 0, 0, 0);
+	if (encoderDistanceReading > Distance) //60 is number of inches to travel
+		robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
+	}
 	
+	public void turn(double turn_angle) {
+        double currentRotationRate;
+        
+		ahrs.zeroYaw();
+        turnController.setSetpoint(turn_angle);
+        turnController.enable();
+        currentRotationRate = rotateToAngleRate;
+        /* Use the joystick X axis for lateral movement,         
+        Y axis for forward movement, and the current          
+        calculated rotation rate (or joystick Z axis),        
+        depending upon whether "rotate to angle" is active.    */
+        robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),currentRotationRate, ahrs.getAngle());
+	}
 	
 	@Override
 	public void autonomousInit() {
@@ -386,29 +407,9 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		switch (autoSelected) {
 		case customAuto:
 			// Put custom auto code here
-	        double currentRotationRate;
-			//Drive Forward 5' thearetical
-	        double encoderDistanceReading = encoder.getDistance();
-		SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+		forward(60);	// in inches
+		turn(90f);	// in degreese -180 to 180
 		
-		robotDrive.mecanumDrive_Cartesian(.75, 0, 0, 0);
-		if (encoderDistanceReading > 60) //60 is number of inches to travel
-			robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
-        
-		ahrs.zeroYaw();
-        turnController.setSetpoint(90.0f);
-        turnController.enable();
-        currentRotationRate = rotateToAngleRate;
-        /* Use the joystick X axis for lateral movement,         
-        Y axis for forward movement, and the current          
-        calculated rotation rate (or joystick Z axis),        
-        depending upon whether "rotate to angle" is active.    */
-        robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),currentRotationRate, ahrs.getAngle());
-        
-		
-		
-			
-			
 			break;
 		case defaultAuto:
 		default:

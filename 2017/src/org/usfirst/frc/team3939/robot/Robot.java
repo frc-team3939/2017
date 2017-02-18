@@ -55,7 +55,7 @@ public class Robot extends IterativeRobot {
 	double ShooterPower = 0;
 	
 	CANTalon IntakeMotor = new CANTalon(23); 
-	double IntakePower = 0.5;
+	double IntakePower = 0.35;
 
 	Talon RightConveyorMotor, LeftConveyorMotor; 
 	double ConveyorPower = 1;

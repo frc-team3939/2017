@@ -51,10 +51,10 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	Talon ShooterMotor; 
+	CANTalon ShooterMotor = new CANTalon(23); 
 	double ShooterPower = 0;
 	
-	CANTalon IntakeMotor = new CANTalon(23); 
+	CANTalon IntakeMotor = new CANTalon(20); 
 	double IntakePower = 0.5;
 
 	Talon RightConveyorMotor, LeftConveyorMotor; 

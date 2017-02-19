@@ -52,6 +52,11 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
+	CANTalon kGearRight = new CANTalon(29);
+	CANTalon kGearLeft = new CANTalon(22);
+	double ClosedPosition = 0.0;
+	double OpenPosition = 0.25;
+	
 	CANTalon ShooterMotor = new CANTalon(23); 
 	double ShooterPower = 0;
 	
@@ -75,6 +80,61 @@ public class Robot extends IterativeRobot {
 	
 	Joystick stick = new Joystick(kJoystickChannel);
 	
+	public void initTalonEncoders(){
+		/* lets grab the 360 degree position of the MagEncoder's absolute position */
+		int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
+        /* use the low level API to set the quad encoder signal */
+		kGearRight.setPosition(0);
+		kGearRight.setEncPosition(0);
+        
+        /* choose the sensor and sensor direction */
+        kGearRight.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        kGearRight.changeControlMode(TalonControlMode.PercentVbus);
+        kGearRight.set(0);
+        kGearRight.reverseSensor(false);
+        kGearRight.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
+        //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
+
+        /* set the peak and nominal outputs, 12V means full */
+        kGearRight.configNominalOutputVoltage(+0f, -0f);
+        kGearRight.configPeakOutputVoltage(+12f, -12f);
+        /* set the allowable closed-loop error,
+         * Closed-Loop output will be neutral within this range.
+         * See Table in Section 17.2.1 for native units per rotation. 
+         */
+        kGearRight.setAllowableClosedLoopErr(0); /* always servo */
+        /* set closed loop gains in slot0 */
+        kGearRight.enableForwardSoftLimit(true);
+        kGearRight.setForwardSoftLimit(OpenPosition);
+        kGearRight.enableReverseSoftLimit(true);
+        kGearRight.setReverseSoftLimit(ClosedPosition);
+		/* lets grab the 360 degree position of the MagEncoder's absolute position */
+		int absolutePositionLeft = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
+        /* use the low level API to set the quad encoder signal */
+		kGearLeft.setPosition(0);
+		kGearLeft.setEncPosition(0);
+        
+        /* choose the sensor and sensor direction */
+        kGearLeft.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        kGearLeft.changeControlMode(TalonControlMode.PercentVbus);
+        kGearLeft.set(0);
+        kGearLeft.reverseSensor(false);
+        kGearLeft.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
+        //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
+
+        /* set the peak and nominal outputs, 12V means full */
+        kGearLeft.configNominalOutputVoltage(+0f, -0f);
+        kGearLeft.configPeakOutputVoltage(+12f, -12f);
+        /* set the allowable closed-loop error,
+         * Closed-Loop output will be neutral within this range.
+         * See Table in Section 17.2.1 for native units per rotation. 
+         */
+        kGearLeft.setAllowableClosedLoopErr(0); /* always servo */
+        /* set closed loop gains in slot0 */
+        kGearLeft.enableForwardSoftLimit(true);
+        kGearLeft.setForwardSoftLimit(ClosedPosition);
+        kGearLeft.enableReverseSoftLimit(true);
+        kGearLeft.setReverseSoftLimit(-OpenPosition);	}
 	
 	/**
 	 * This function is run when the robot is first started up and should be

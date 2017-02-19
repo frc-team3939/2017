@@ -363,13 +363,35 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		
 	}
 	
-	public void forward(double Distance){
-		//Drive Forward 5' thearetical
+	public void impale(){
+		double z = SmartDashboard.getNumber("SHAPE_SIZE");
+		double Math = 5760 / z; // Focal Point/area distance in inches
+		
+		SmartDashboard.putNumber("Approx Dist in Inches",Math);
+		forward(Math);
+		//Deploy gear
+		backward(5); //Should go backwards
+		
+		
+
+
+	}
+	
+	public void backward(double Distance){
         double encoderDistanceReading = encoder.getDistance();
 	SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
 	
-	robotDrive.mecanumDrive_Cartesian(.75, 0, 0, 0);
-	if (encoderDistanceReading > Distance) //60 is number of inches to travel
+	robotDrive.mecanumDrive_Cartesian(0, -.75, 0, 0);
+	if (encoderDistanceReading < Distance) //Distance is number of inches to travel
+		robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
+	}
+	
+	public void forward(double Distance){
+        double encoderDistanceReading = encoder.getDistance();
+	SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+	
+	robotDrive.mecanumDrive_Cartesian(0, .75, 0, 0);
+	if (encoderDistanceReading > Distance) //Distance is number of inches to travel
 		robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
 	}
 	

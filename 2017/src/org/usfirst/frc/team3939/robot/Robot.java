@@ -51,8 +51,8 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	CANTalon kGearRight = new CANTalon(25);
-	CANTalon kGearLeft = new CANTalon(51);
+	CANTalon kGearRight = new CANTalon(29);
+	CANTalon kGearLeft = new CANTalon(22);
 	
 	double OpenPosition = 0.5; //gear open position
 	double ClosedPosition = 0; //gear open position

@@ -55,7 +55,7 @@ public class Robot extends IterativeRobot {
 	CANTalon kGearLeft = new CANTalon(29);
 	
 	double OpenPosition = .25; //gear open position
-	double ClosedPosition = 0; //gear open position
+	double ClosedPosition = 0.0; //gear open position
 	
 	
 	Talon ShooterMotor; 
@@ -159,9 +159,9 @@ public class Robot extends IterativeRobot {
         kGearLeft.setAllowableClosedLoopErr(0); /* always servo */
         /* set closed loop gains in slot0 */
         kGearLeft.enableForwardSoftLimit(true);
-        kGearLeft.setForwardSoftLimit(OpenPosition);
+        kGearLeft.setForwardSoftLimit(ClosedPosition);
         kGearLeft.enableReverseSoftLimit(true);
-        kGearLeft.setReverseSoftLimit(ClosedPosition);	}
+        kGearLeft.setReverseSoftLimit(-OpenPosition);	}
 	
 	public void opengears() {
 		kGearRight.set(.4); 

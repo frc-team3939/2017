@@ -51,10 +51,10 @@ public class Robot extends IterativeRobot {
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	CANTalon kGearRight = new CANTalon(29);
-	CANTalon kGearLeft = new CANTalon(22);
+	CANTalon kGearRight = new CANTalon(22);
+	CANTalon kGearLeft = new CANTalon(29);
 	
-	double OpenPosition = 0.5; //gear open position
+	double OpenPosition = .25; //gear open position
 	double ClosedPosition = 0; //gear open position
 	
 	
@@ -77,8 +77,8 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		smartDashBoardBsetup();
 		
-		ShooterStop = new Servo(1);  //ShooterStop
-		ShooterStop.set(.9); // set start location
+		//ShooterStop = new Servo(1);  //ShooterStop
+	//	ShooterStop.set(.9); // set start location
 
 		ShooterMotor = new Talon(0); 
 		
@@ -111,10 +111,13 @@ public class Robot extends IterativeRobot {
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
 		int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
         /* use the low level API to set the quad encoder signal */
-		kGearRight.setEncPosition(absolutePositionRight);
+		kGearRight.setPosition(0);
+		kGearRight.setEncPosition(0);
         
         /* choose the sensor and sensor direction */
-        kGearRight.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
+        kGearRight.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        kGearRight.changeControlMode(TalonControlMode.PercentVbus);
+        kGearRight.set(0);
         kGearRight.reverseSensor(false);
         kGearRight.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
         //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
@@ -128,22 +131,23 @@ public class Robot extends IterativeRobot {
          */
         kGearRight.setAllowableClosedLoopErr(0); /* always servo */
         /* set closed loop gains in slot0 */
-        kGearRight.setProfile(0);
-        kGearRight.setF(0.0);
-        kGearRight.setP(1.0);
-        kGearRight.setI(0.0); 
-        kGearRight.setD(0.0);   
-        
-        /* lets grab the 360 degree position of the MagEncoder's absolute position */
-		int absolutePositionLeft = kGearLeft.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
+        kGearRight.enableForwardSoftLimit(true);
+        kGearRight.setForwardSoftLimit(OpenPosition);
+        kGearRight.enableReverseSoftLimit(true);
+        kGearRight.setReverseSoftLimit(ClosedPosition);
+		/* lets grab the 360 degree position of the MagEncoder's absolute position */
+		int absolutePositionLeft = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
         /* use the low level API to set the quad encoder signal */
-        kGearLeft.setEncPosition(absolutePositionLeft);
+		kGearLeft.setPosition(0);
+		kGearLeft.setEncPosition(0);
         
         /* choose the sensor and sensor direction */
-        kGearLeft.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
+        kGearLeft.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        kGearLeft.changeControlMode(TalonControlMode.PercentVbus);
+        kGearLeft.set(0);
         kGearLeft.reverseSensor(false);
         kGearLeft.configEncoderCodesPerRev(497); // if using FeedbackDevice.QuadEncoder
-        //kGearLeft.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
+        //kGearRight.configPotentiometerTurns(XXX), // if using FeedbackDevice.AnalogEncoder or AnalogPot
 
         /* set the peak and nominal outputs, 12V means full */
         kGearLeft.configNominalOutputVoltage(+0f, -0f);
@@ -154,27 +158,19 @@ public class Robot extends IterativeRobot {
          */
         kGearLeft.setAllowableClosedLoopErr(0); /* always servo */
         /* set closed loop gains in slot0 */
-        kGearLeft.setProfile(0);
-        kGearLeft.setF(0.0);
-        kGearLeft.setP(1.0);
-        kGearLeft.setI(0.0); 
-        kGearLeft.setD(0.0);    
-
-		kGearRight.changeControlMode(TalonControlMode.Position);
-		kGearLeft.changeControlMode(TalonControlMode.Position);
-		kGearRight.reset();
-		kGearLeft.reset();
-
-	}
+        kGearLeft.enableForwardSoftLimit(true);
+        kGearLeft.setForwardSoftLimit(OpenPosition);
+        kGearLeft.enableReverseSoftLimit(true);
+        kGearLeft.setReverseSoftLimit(ClosedPosition);	}
 	
 	public void opengears() {
-		kGearRight.set(OpenPosition); 
-		kGearLeft.set(OpenPosition); 
+		kGearRight.set(.4); 
+		kGearLeft.set(-.4); 
 	}
 	
 	public void closegears() {
-		kGearRight.set(ClosedPosition); 
-		kGearLeft.changeControlMode(TalonControlMode.Position);
+		kGearRight.set(-.4); 
+		kGearLeft.set(.4); 
 	}
 	
 	public void startshooter() {
@@ -335,6 +331,7 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber(   "IMU_Byte_Count",       ahrs.getByteCount());
         SmartDashboard.putNumber(   "IMU_Update_Count",     ahrs.getUpdateCount());
 		
+        SmartDashboard.putNumber("Right Gear Encoder Output", kGearRight.get());
 	}
 	
 	

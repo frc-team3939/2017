@@ -179,7 +179,15 @@ public class Robot extends IterativeRobot {
 		
 	}
 
+	public void opengears() {
+		kGearRight.set(.4); 
+		kGearLeft.set(-.4); 
+	}
 	
+	public void closegears() {
+		kGearRight.set(-.4); 
+		kGearLeft.set(.4); 
+	}
 	public void startintake() {
 		IntakeMotor.set(-IntakePower); 
     }
@@ -452,8 +460,8 @@ public class Robot extends IterativeRobot {
 	          if (stick.getRawButton(8)) {
 	        	  stopintake();
 	          }
-	          if (stick.getRawButton(11)) {
-	        	  reverseintake();
+	        //  if (stick.getRawButton(11)) {
+	        	//  reverseintake();
 	          }
 	          if (stick.getRawButton(9)) {
 	        	  startConveyor();
@@ -479,9 +487,15 @@ public class Robot extends IterativeRobot {
 	          if (stick.getRawButton(3)) {
 	        	  stopshooter();	        	  
 	          }
+	          if (stick.getRawButton(11)) {
+	        	  opengears();
+	          }
+	          if (stick.getRawButton(12)) {
+	        	  closegears();
+	          }
 	          
 		}
-	}
+	
 
 	/**
 	 * This function is called periodically during test mode

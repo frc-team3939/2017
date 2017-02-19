@@ -86,7 +86,6 @@ public class Robot extends IterativeRobot {
 		ShooterStop = new Servo(8);  //ShooterStop
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
-		ShooterMotor = new Talon(0); //set PMW Location
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(3); //set PMW Location

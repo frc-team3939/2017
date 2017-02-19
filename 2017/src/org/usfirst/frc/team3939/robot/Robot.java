@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
@@ -51,6 +52,8 @@ public class Robot extends IterativeRobot {
 	CANTalon kRearLeftChannel = new CANTalon(21);
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
+	
+	DigitalInput lightshooter, lightgear;
 	
 	CANTalon kGearRight = new CANTalon(29);
 	CANTalon kGearLeft = new CANTalon(22);
@@ -175,7 +178,8 @@ public class Robot extends IterativeRobot {
 	      } catch (RuntimeException ex ) {
 	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
 	      }
-		
+		lightshooter = new DigitalInput(9);
+		lightgear = new DigitalInput(8);
 		
 	}
 
@@ -473,10 +477,10 @@ public class Robot extends IterativeRobot {
 	        	//  reverseConveyor();
 	          }
 	          if (stick.getRawButton(7)) {
-	        //	  startClimb();
+	        	  startClimb();
 	          }
 	          if (stick.getRawButton(8)) {
-	        //	  stopClimb();
+	              stopClimb();
 	          }
 	          if (stick.getRawButton(9)) {
 	        	  //reverseClimb();

@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
@@ -55,7 +56,7 @@ public class Robot extends IterativeRobot {
 	double ShooterPower = 0;
 	
 	CANTalon IntakeMotor = new CANTalon(20); 
-	double IntakePower = 0.5;
+	double IntakePower = 0.6;
 
 	Talon RightConveyorMotor, LeftConveyorMotor; 
 	double ConveyorPower = 1;
@@ -83,12 +84,14 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		smartDashBoardBsetup();
 		
+		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
+		
 		ShooterStop = new Servo(8);  //ShooterStop
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
-		LeftConveyorMotor = new Talon(3); //set PMW Location
+		LeftConveyorMotor = new Talon(1); //set PMW Location
 
 		Climb1Motor = new Talon(4); //set PMW Location
 		Climb2Motor = new Talon(5); //set PMW Location
@@ -128,15 +131,15 @@ public class Robot extends IterativeRobot {
     }
 
 	public void startConveyor() {
-		RightConveyorMotor.set(ConveyorPower); 
-		LeftConveyorMotor.set(-ConveyorPower); 
+		RightConveyorMotor.set(-ConveyorPower); 
+		LeftConveyorMotor.set(ConveyorPower); 
     }
 	public void stopConveyor() {
 		RightConveyorMotor.stopMotor();
 		LeftConveyorMotor.stopMotor();
     }
 	public void reverseConveyor() {
-		RightConveyorMotor.set(-ConveyorPower); 
+		RightConveyorMotor.set(ConveyorPower); 
 		LeftConveyorMotor.set(-ConveyorPower); 
     }
 
@@ -155,9 +158,9 @@ public class Robot extends IterativeRobot {
 
 	
 	public void startshooter() {
-		ShooterPower = 1; //set shooter power level
+		ShooterPower = .85; //set shooter power level
 		ShooterMotor.set(ShooterPower); 
-    	//Timer.delay(3.0);
+    	Timer.delay(1);
     	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
     	//need to start conveyor
     }
@@ -368,10 +371,10 @@ public class Robot extends IterativeRobot {
 			// is set to zero.
 			
 			//regular drive
-			//robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), 0);
+			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), (-stick.getZ()*.5), 0);
 			
 			//field drive
-			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
+			//robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
 
 			
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
@@ -411,12 +414,10 @@ public class Robot extends IterativeRobot {
 	        	  //reverseClimb();
 	          }
 	          if (stick.getRawButton(2)) {
-	        	  ShooterStop.set(ShooterStopClosedLoc); 
-	        	  
+	        	  startshooter();
 	          }
 	          if (stick.getRawButton(3)) {
-	        	 ShooterStop.set(ShooterStopOpenLoc); 
-	        	  
+	        	  stopshooter();	        	  
 	          }
 	          
 		}

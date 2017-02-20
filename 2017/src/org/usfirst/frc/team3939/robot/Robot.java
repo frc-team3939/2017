@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
@@ -51,6 +52,8 @@ public class Robot extends IterativeRobot {
 	CANTalon kRearLeftChannel = new CANTalon(21);
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
+	
+	DigitalOutput shooterlight;
 	
 	CANTalon kGearRight = new CANTalon(29);
 	CANTalon kGearLeft = new CANTalon(22);
@@ -149,6 +152,7 @@ public class Robot extends IterativeRobot {
 		ShooterStop = new Servo(8);  //ShooterStop
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
+		shooterlight = new DigitalOutput(9);
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(1); //set PMW Location
@@ -179,6 +183,15 @@ public class Robot extends IterativeRobot {
 		
 	}
 
+	public void opengears() {
+		kGearRight.set(.4); 
+		kGearLeft.set(-.4); 
+	}
+	
+	public void closegears() {
+		kGearRight.set(-.4); 
+		kGearLeft.set(.4); 
+	}
 	
 	public void startintake() {
 		IntakeMotor.set(-IntakePower); 
@@ -469,17 +482,22 @@ public class Robot extends IterativeRobot {
 	          if (stick.getRawButton(6)) {
 	        	//  reverseConveyor();
 	          }
-	          //if (stick.getRawButton(7)) {
+	          if (stick.getRawButton(7)) {
 	        	//  startClimb();
-	          //}
-	          //if (stick.getRawButton(8)) {
+	          shooterlight.set(true);
+	          }
+	          if (stick.getRawButton(8)) {
 	        	//  stopClimb();
-	          //}
+	          shooterlight.set(false);
+	          }
 	         // if (stick.getRawButton(9)) {
 	        	//  reverseClimb();
 	          //}
         	  if (stick.getRawButton(10)) {
-        		  
+        		  opengears();
+        	  }
+        	  if (stick.getRawButton(12)) {
+        		  closegears();
         	  }
 	          
 	          

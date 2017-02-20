@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
@@ -52,8 +51,6 @@ public class Robot extends IterativeRobot {
 	CANTalon kRearLeftChannel = new CANTalon(21);
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
-	
-	DigitalInput lightshooter, lightgear;
 	
 	CANTalon kGearRight = new CANTalon(29);
 	CANTalon kGearLeft = new CANTalon(22);
@@ -178,20 +175,11 @@ public class Robot extends IterativeRobot {
 	      } catch (RuntimeException ex ) {
 	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
 	      }
-		lightshooter = new DigitalInput(9);
-		lightgear = new DigitalInput(8);
+		
 		
 	}
 
-	public void opengears() {
-		kGearRight.set(.4); 
-		kGearLeft.set(-.4); 
-	}
 	
-	public void closegears() {
-		kGearRight.set(-.4); 
-		kGearLeft.set(.4); 
-	}
 	public void startintake() {
 		IntakeMotor.set(-IntakePower); 
     }
@@ -457,49 +445,46 @@ public class Robot extends IterativeRobot {
 	          }
 
 	          smartDashBoardDisplay();
-	          
-	          if (stick.getRawButton(7)) {
+	          if (stick.getRawButton(1)) {
+	        	  startshooter();
+	          }
+	          if (stick.getRawButton(2)) {
+	        	  stopshooter();
+	          }
+	          if (stick.getRawButton(5)) {
 	        	  startintake();
 	          }
-	          if (stick.getRawButton(8)) {
+	          if (stick.getRawButton(6)) {
 	        	  stopintake();
 	          }
-	        //  if (stick.getRawButton(11)) {
-	        	//  reverseintake();
+	          if (stick.getRawButton(11)) {
+	        	  reverseintake();
 	          }
-	          if (stick.getRawButton(9)) {
+	          if (stick.getRawButton(3)) {
 	        	  startConveyor();
 	          }
-	          if (stick.getRawButton(10)) {
+	          if (stick.getRawButton(4)) {
 	        	  stopConveyor();
 	          }
 	          if (stick.getRawButton(6)) {
 	        	//  reverseConveyor();
 	          }
-	          if (stick.getRawButton(7)) {
-	        	  startClimb();
-	          }
-	          if (stick.getRawButton(8)) {
-	              stopClimb();
-	          }
-	          if (stick.getRawButton(9)) {
-	        	  //reverseClimb();
-	          }
-	          if (stick.getRawButton(2)) {
-	        	  startshooter();
-	          }
-	          if (stick.getRawButton(3)) {
-	        	  stopshooter();	        	  
-	          }
-	          if (stick.getRawButton(11)) {
-	        	  opengears();
-	          }
-	          if (stick.getRawButton(12)) {
-	        	  closegears();
-	          }
+	          //if (stick.getRawButton(7)) {
+	        	//  startClimb();
+	          //}
+	          //if (stick.getRawButton(8)) {
+	        	//  stopClimb();
+	          //}
+	         // if (stick.getRawButton(9)) {
+	        	//  reverseClimb();
+	          //}
+        	  if (stick.getRawButton(10)) {
+        		  
+        	  }
+	          
 	          
 		}
-	
+	}
 
 	/**
 	 * This function is called periodically during test mode

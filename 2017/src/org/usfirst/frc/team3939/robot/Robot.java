@@ -10,17 +10,14 @@ import edu.wpi.first.wpilibj.RobotDrive.MotorType;
 import edu.wpi.first.wpilibj.Timer;
 import com.ctre.CANTalon.TalonControlMode;
 import com.ctre.CANTalon.FeedbackDevice;
-import com.ctre.CANTalon.StatusFrameRate;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.I2C;
-import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.DriverStation;
-
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 
 
@@ -35,15 +32,14 @@ import edu.wpi.first.wpilibj.DriverStation;
  */
 public class Robot extends IterativeRobot {
 	AHRS ahrs;
-	final String defaultAuto = "Default";
-	final String customAuto = "My Auto";
+	
+	
 	String autoSelected;
-	SendableChooser<String> chooser = new SendableChooser<>();
-	SendableChooser<String> DriveType = new SendableChooser();
-    SendableChooser<String> MaxSpeed = new SendableChooser();
-    SendableChooser<String> shooterSpeed = new SendableChooser();
-    SendableChooser<String> HeightOffset = new SendableChooser();
-    SendableChooser<String> atomtype = new SendableChooser();
+	SendableChooser<String> DriveType = new SendableChooser<>();
+    //SendableChooser<String> MaxSpeed = new SendableChooser<>();
+    //SendableChooser<String> shooterSpeed = new SendableChooser<>();
+    //SendableChooser<String> HeightOffset = new SendableChooser<>();
+    SendableChooser<String> atomtype = new SendableChooser<>();
     
 	RobotDrive robotDrive;
 
@@ -77,15 +73,13 @@ public class Robot extends IterativeRobot {
 	double ShooterStopClosedLoc = .55;
 	double ShooterStopOpenLoc = .7;
 	 
+	Joystick stick = new Joystick(0);
 	
-	// The channel on the driver station that the joystick is connected to
-	final int kJoystickChannel = 0;
-	
-	Joystick stick = new Joystick(kJoystickChannel);
+	boolean IntakeSetarted = false, ConveyorStarted = false, ShooterStarter = false, ClimbStarted = false;
 	
 	public void initTalonEncoders(){
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
-		int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
+		//int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
         /* use the low level API to set the quad encoder signal */
 		kGearRight.setPosition(0);
 		kGearRight.setEncPosition(0);
@@ -112,7 +106,7 @@ public class Robot extends IterativeRobot {
         kGearRight.enableReverseSoftLimit(true);
         kGearRight.setReverseSoftLimit(ClosedPosition);
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
-		int absolutePositionLeft = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
+		//int absolutePositionLeft = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
         /* use the low level API to set the quad encoder signal */
 		kGearLeft.setPosition(0);
 		kGearLeft.setEncPosition(0);
@@ -146,6 +140,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		smartDashBoardBsetup();
+		
+		initTalonEncoders();
 		
 		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
 		
@@ -197,7 +193,8 @@ public class Robot extends IterativeRobot {
 		IntakeMotor.set(-IntakePower); 
     }
 	public void stopintake() {
-		IntakeMotor.stopMotor();
+		//IntakeMotor.stopMotor();
+		IntakeMotor.set(0);
     }
 	public void reverseintake() {
 		IntakeMotor.set(IntakePower); 
@@ -228,7 +225,6 @@ public class Robot extends IterativeRobot {
 		Climb1Motor.set(-ClimbPower); 
 		Climb2Motor.set(-ClimbPower); 
     }
-
 	
 	public void startshooter() {
 		ShooterPower = .85; //set shooter power level
@@ -242,41 +238,38 @@ public class Robot extends IterativeRobot {
 		//need to stop conveyor
 		ShooterStop.set(ShooterStopClosedLoc); //Shooter Servo location
 		//Timer.delay(3.0);
-    	ShooterMotor.stopMotor();			
+    	//ShooterMotor.stopMotor();			
+    	ShooterMotor.set(0);			
 	}
 	
 	
 	public void smartDashBoardBsetup() {
-		chooser.addDefault("Default Auto", defaultAuto);
-		chooser.addObject("My Auto", customAuto);
-		SmartDashboard.putData("Auto choices", chooser);
 		
-		DriveType.addObject("2 Joysticks", "Tank");
-    	DriveType.addDefault("1 Joystick", "Arcade");
+		DriveType.addObject("Field Drive", "Field");
+    	DriveType.addDefault("Normal Drive", "Normal");
     	SmartDashboard.putData("Drive Type", DriveType);
 		
-    	MaxSpeed.addDefault("100%", "1");
-    	MaxSpeed.addObject("90%", ".9");
-    	MaxSpeed.addObject("80%", ".8");
-    	MaxSpeed.addObject("70%", ".7");
-    	MaxSpeed.addObject("60%", ".6");
-    	MaxSpeed.addObject("50%", ".5");
-    	MaxSpeed.addObject("40%", ".4");
-    	MaxSpeed.addObject("30%", ".3");
-    	MaxSpeed.addObject("20%", ".2");
-    	SmartDashboard.putData("Max Speed %", MaxSpeed);
+    	//MaxSpeed.addDefault("100%", "1");
+    	//MaxSpeed.addObject("90%", ".9");
+    	//MaxSpeed.addObject("80%", ".8");
+    	//MaxSpeed.addObject("70%", ".7");
+    	//MaxSpeed.addObject("60%", ".6");
+    	//MaxSpeed.addObject("50%", ".5");
+    	//MaxSpeed.addObject("40%", ".4");
+    	//MaxSpeed.addObject("30%", ".3");
+    	//MaxSpeed.addObject("20%", ".2");
+    	//SmartDashboard.putData("Max Speed %", MaxSpeed);
     	
-    	atomtype.addObject("Portcullis", "Portcullis");
-    	atomtype.addObject("Drawbridge", "Drawbridge");
-    	atomtype.addObject("Ramparts", "Ramparts");
-    	atomtype.addObject("RockWall", "RockWall");
-    	atomtype.addObject("LowBar", "LowBar");
-    	atomtype.addObject("ChevaldeFrise", "ChevaldeFrise");
-    	atomtype.addObject("Moat", "Moat");
-    	atomtype.addObject("Sallyport", "Sallyport");
-    	atomtype.addDefault("RoughTerrain", "RoughTerrain");
+    	atomtype.addObject("Red 1", "Red1");
+    	atomtype.addObject("Red 2", "Red2");
+    	atomtype.addObject("Red 3", "Red3");
+    	atomtype.addObject("Blue 1", "Blue1");
+    	atomtype.addObject("Blue 2", "Blue2");
+    	atomtype.addObject("Blue 3", "Blue3");
+    	atomtype.addDefault("None", "None");
     	SmartDashboard.putData("Autonomous Type", atomtype);
-    	    	
+    	
+    	/*
     	shooterSpeed.addObject("100%", "1");
     	shooterSpeed.addObject("90%", ".9");
     	shooterSpeed.addDefault("80%", ".8");
@@ -288,6 +281,7 @@ public class Robot extends IterativeRobot {
     	shooterSpeed.addObject("20%", ".2");
     	shooterSpeed.addObject("10%", ".1");
     	SmartDashboard.putData("Shooter Speed %", shooterSpeed);
+    	*/
     	/*
     	HeightOffset.addObject("160", "160");
     	HeightOffset.addObject("150", "150");
@@ -311,32 +305,32 @@ public class Robot extends IterativeRobot {
 
 	public void smartDashBoardDisplay() {
         /* Display 6-axis Processed Angle Data                                      */
-        SmartDashboard.putBoolean(  "IMU_Connected",        ahrs.isConnected());
-        SmartDashboard.putBoolean(  "IMU_IsCalibrating",    ahrs.isCalibrating());
-        SmartDashboard.putNumber(   "IMU_Yaw",              ahrs.getYaw());
-        SmartDashboard.putNumber(   "IMU_Pitch",            ahrs.getPitch());
-        SmartDashboard.putNumber(   "IMU_Roll",             ahrs.getRoll());
+        //SmartDashboard.putBoolean(  "IMU_Connected",        ahrs.isConnected());
+        //SmartDashboard.putBoolean(  "IMU_IsCalibrating",    ahrs.isCalibrating());
+        //SmartDashboard.putNumber(   "IMU_Yaw",              ahrs.getYaw());
+        //SmartDashboard.putNumber(   "IMU_Pitch",            ahrs.getPitch());
+        //SmartDashboard.putNumber(   "IMU_Roll",             ahrs.getRoll());
         
-        /* Display tilt-corrected, Magnetometer-based heading (requires             */
+		/* Display tilt-corrected, Magnetometer-based heading (requires             */
         /* magnetometer calibration to be useful)                                   */
         
-        SmartDashboard.putNumber(   "IMU_CompassHeading",   ahrs.getCompassHeading());
+        //SmartDashboard.putNumber(   "IMU_CompassHeading",   ahrs.getCompassHeading());
         
         /* Display 9-axis Heading (requires magnetometer calibration to be useful)  */
-        SmartDashboard.putNumber(   "IMU_FusedHeading",     ahrs.getFusedHeading());
+        //SmartDashboard.putNumber(   "IMU_FusedHeading",     ahrs.getFusedHeading());
 
         /* These functions are compatible w/the WPI Gyro Class, providing a simple  */
         /* path for upgrading from the Kit-of-Parts gyro to the navx-MXP            */
         
-        SmartDashboard.putNumber(   "IMU_TotalYaw",         ahrs.getAngle());
-        SmartDashboard.putNumber(   "IMU_YawRateDPS",       ahrs.getRate());
+        //SmartDashboard.putNumber(   "IMU_TotalYaw",         ahrs.getAngle());
+        //SmartDashboard.putNumber(   "IMU_YawRateDPS",       ahrs.getRate());
 
         /* Display Processed Acceleration Data (Linear Acceleration, Motion Detect) */
         
-        SmartDashboard.putNumber(   "IMU_Accel_X",          ahrs.getWorldLinearAccelX());
-        SmartDashboard.putNumber(   "IMU_Accel_Y",          ahrs.getWorldLinearAccelY());
-        SmartDashboard.putBoolean(  "IMU_IsMoving",         ahrs.isMoving());
-        SmartDashboard.putBoolean(  "IMU_IsRotating",       ahrs.isRotating());
+        //SmartDashboard.putNumber(   "IMU_Accel_X",          ahrs.getWorldLinearAccelX());
+        //SmartDashboard.putNumber(   "IMU_Accel_Y",          ahrs.getWorldLinearAccelY());
+        //SmartDashboard.putBoolean(  "IMU_IsMoving",         ahrs.isMoving());
+        //SmartDashboard.putBoolean(  "IMU_IsRotating",       ahrs.isRotating());
 
         /* Display estimates of velocity/displacement.  Note that these values are  */
         /* not expected to be accurate enough for estimating robot position on a    */
@@ -344,51 +338,50 @@ public class Robot extends IterativeRobot {
         /* of these errors due to single (velocity) integration and especially      */
         /* double (displacement) integration.                                       */
         
-        SmartDashboard.putNumber(   "Velocity_X",           ahrs.getVelocityX());
-        SmartDashboard.putNumber(   "Velocity_Y",           ahrs.getVelocityY());
-        SmartDashboard.putNumber(   "Displacement_X",       ahrs.getDisplacementX());
-        SmartDashboard.putNumber(   "Displacement_Y",       ahrs.getDisplacementY());
+        //SmartDashboard.putNumber(   "Velocity_X",           ahrs.getVelocityX());
+        //SmartDashboard.putNumber(   "Velocity_Y",           ahrs.getVelocityY());
+        //SmartDashboard.putNumber(   "Displacement_X",       ahrs.getDisplacementX());
+        //SmartDashboard.putNumber(   "Displacement_Y",       ahrs.getDisplacementY());
         
         /* Display Raw Gyro/Accelerometer/Magnetometer Values                       */
         /* NOTE:  These values are not normally necessary, but are made available   */
         /* for advanced users.  Before using this data, please consider whether     */
         /* the processed data (see above) will suit your needs.                     */
         
-        SmartDashboard.putNumber(   "RawGyro_X",            ahrs.getRawGyroX());
-        SmartDashboard.putNumber(   "RawGyro_Y",            ahrs.getRawGyroY());
-        SmartDashboard.putNumber(   "RawGyro_Z",            ahrs.getRawGyroZ());
-        SmartDashboard.putNumber(   "RawAccel_X",           ahrs.getRawAccelX());
-        SmartDashboard.putNumber(   "RawAccel_Y",           ahrs.getRawAccelY());
-        SmartDashboard.putNumber(   "RawAccel_Z",           ahrs.getRawAccelZ());
-        SmartDashboard.putNumber(   "RawMag_X",             ahrs.getRawMagX());
-        SmartDashboard.putNumber(   "RawMag_Y",             ahrs.getRawMagY());
-        SmartDashboard.putNumber(   "RawMag_Z",             ahrs.getRawMagZ());
-        SmartDashboard.putNumber(   "IMU_Temp_C",           ahrs.getTempC());
+        //SmartDashboard.putNumber(   "RawGyro_X",            ahrs.getRawGyroX());
+        //SmartDashboard.putNumber(   "RawGyro_Y",            ahrs.getRawGyroY());
+        //SmartDashboard.putNumber(   "RawGyro_Z",            ahrs.getRawGyroZ());
+        //SmartDashboard.putNumber(   "RawAccel_X",           ahrs.getRawAccelX());
+        //SmartDashboard.putNumber(   "RawAccel_Y",           ahrs.getRawAccelY());
+        //SmartDashboard.putNumber(   "RawAccel_Z",           ahrs.getRawAccelZ());
+        //SmartDashboard.putNumber(   "RawMag_X",             ahrs.getRawMagX());
+        //SmartDashboard.putNumber(   "RawMag_Y",             ahrs.getRawMagY());
+        //SmartDashboard.putNumber(   "RawMag_Z",             ahrs.getRawMagZ());
+        //SmartDashboard.putNumber(   "IMU_Temp_C",           ahrs.getTempC());
         
         /* Omnimount Yaw Axis Information                                           */
         /* For more info, see http://navx-mxp.kauailabs.com/installation/omnimount  */
-        AHRS.BoardYawAxis yaw_axis = ahrs.getBoardYawAxis();
-        SmartDashboard.putString(   "YawAxisDirection",     yaw_axis.up ? "Up" : "Down" );
-        SmartDashboard.putNumber(   "YawAxis",              yaw_axis.board_axis.getValue() );
+        //AHRS.BoardYawAxis yaw_axis = ahrs.getBoardYawAxis();
+        //SmartDashboard.putString(   "YawAxisDirection",     yaw_axis.up ? "Up" : "Down" );
+        //SmartDashboard.putNumber(   "YawAxis",              yaw_axis.board_axis.getValue() );
         
         /* Sensor Board Information                                                 */
-        SmartDashboard.putString(   "FirmwareVersion",      ahrs.getFirmwareVersion());
+        //SmartDashboard.putString(   "FirmwareVersion",      ahrs.getFirmwareVersion());
         
         /* Quaternion Data                                                          */
         /* Quaternions are fascinating, and are the most compact representation of  */
         /* orientation data.  All of the Yaw, Pitch and Roll Values can be derived  */
         /* from the Quaternions.  If interested in motion processing, knowledge of  */
         /* Quaternions is highly recommended.                                       */
-        SmartDashboard.putNumber(   "QuaternionW",          ahrs.getQuaternionW());
-        SmartDashboard.putNumber(   "QuaternionX",          ahrs.getQuaternionX());
-        SmartDashboard.putNumber(   "QuaternionY",          ahrs.getQuaternionY());
-        SmartDashboard.putNumber(   "QuaternionZ",          ahrs.getQuaternionZ());
+        //SmartDashboard.putNumber(   "QuaternionW",          ahrs.getQuaternionW());
+        //SmartDashboard.putNumber(   "QuaternionX",          ahrs.getQuaternionX());
+        //SmartDashboard.putNumber(   "QuaternionY",          ahrs.getQuaternionY());
+        //SmartDashboard.putNumber(   "QuaternionZ",          ahrs.getQuaternionZ());
         
         /* Connectivity Debugging Support                                           */
-        SmartDashboard.putNumber(   "IMU_Byte_Count",       ahrs.getByteCount());
-        SmartDashboard.putNumber(   "IMU_Update_Count",     ahrs.getUpdateCount());
+        //SmartDashboard.putNumber(   "IMU_Byte_Count",       ahrs.getByteCount());
+        //SmartDashboard.putNumber(   "IMU_Update_Count",     ahrs.getUpdateCount());
         
-        SmartDashboard.putNumber(   "ShooterStop",          ShooterStop.getPosition());
         
 	}
 	
@@ -408,7 +401,7 @@ public class Robot extends IterativeRobot {
 
 	@Override
 	public void autonomousInit() {
-		autoSelected = chooser.getSelected();
+		autoSelected = DriveType.getSelected();
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
@@ -420,10 +413,25 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		switch (autoSelected) {
-		case customAuto:
+		case "Red1":
 			// Put custom auto code here
 			break;
-		case defaultAuto:
+		case "Red2":
+			// Put custom auto code here
+			break;
+		case "Red3":
+			// Put custom auto code here
+			break;
+		case "Blue1":
+			// Put custom auto code here
+			break;
+		case "Blue2":
+			// Put custom auto code here
+			break;
+		case "Blue3":
+			// Put custom auto code here
+			break;
+		case "None":
 		default:
 			// Put default auto code here
 			break;
@@ -443,21 +451,27 @@ public class Robot extends IterativeRobot {
 			// This sample does not use field-oriented drive, so the gyro input
 			// is set to zero.
 			
-			//regular drive
-			robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), (-stick.getZ()*.5), 0);
-			
-			//field drive
-			//robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
-
-			
+			switch (DriveType.getSelected()) {
+			case "Field":
+				//field drive
+				if ( stick.getTrigger() ) {//trigger same as button 1
+		              ahrs.zeroYaw();
+		        }
+				robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
+				break;
+			case "Normal":
+			default:
+				//regular drive
+				robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), (-stick.getZ()*.5), 0);
+				break;
+			}
+						
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
 			
-			boolean zero_yaw_pressed = stick.getTrigger();
-	          if ( zero_yaw_pressed ) {
-	              ahrs.zeroYaw();
-	          }
+			
 
 	          smartDashBoardDisplay();
+	          
 	          if (stick.getRawButton(1)) {
 	        	  startshooter();
 	          }

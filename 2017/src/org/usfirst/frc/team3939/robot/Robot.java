@@ -364,8 +364,8 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	}
 	
 	public void impale(){
-		double z = SmartDashboard.getNumber("SHAPE_SIZE");
-		double Math = 5760 / z; // Focal Point/area distance in inches
+		double z = SmartDashboard.getNumber("IMAGE_HEIGHT");
+		double Math = 27.59 / z; // 27.59 is calculated focal length f = (# of pixels in height, width, or area * actual distance) / height, width, or area(same as first) this was calculated on boiler so it could be wrong or need to be changed for the gear
 		
 		SmartDashboard.putNumber("Approx Dist in Inches",Math);
 		forward(Math);

@@ -5,8 +5,11 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.RobotDrive.MotorType;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.Timer;
 import com.ctre.CANTalon.TalonControlMode;
 import com.ctre.CANTalon.FeedbackDevice;
@@ -30,9 +33,8 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
  * creating this project, you must also update the manifest file in the resource
  * directory.
  */
-public class Robot extends IterativeRobot {
+public class Robot extends IterativeRobot  implements PIDOutput{
 	AHRS ahrs;
-	
 	
 	String autoSelected;
 	SendableChooser<String> DriveType = new SendableChooser<>();
@@ -76,6 +78,27 @@ public class Robot extends IterativeRobot {
 	Joystick stick = new Joystick(0);
 	
 	boolean IntakeSetarted = false, ConveyorStarted = false, ShooterStarter = false, ClimbStarted = false;
+	
+	// turn to angle stuff
+	PIDController turnController;
+    double rotateToAngleRate;
+    double currentRotationRate;
+    
+    
+    /* The following PID Controller coefficients will need to be tuned */
+    /* to match the dynamics of your drive system.  Note that the      */
+    /* SmartDashboard in Test mode has support for helping you tune    */
+    /* controllers by displaying a form where you can enter new P, I,  */
+    /* and D constants and test the mechanism.                         */
+    
+    static final double kP = 0.03;
+    static final double kI = 0.00;
+    static final double kD = 0.00;
+    static final double kF = 0.00;
+    
+    static final double kToleranceDegrees = 2.0f;
+    // end turn to angle stuff
+	
 	
 	public void initTalonEncoders(){
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
@@ -176,6 +199,18 @@ public class Robot extends IterativeRobot {
 	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
 	      }
 		
+		// rotate to angle stuff
+				turnController = new PIDController(kP, kI, kD, kF, ahrs, this);
+		        turnController.setInputRange(-180.0f,  180.0f);
+		        turnController.setOutputRange(-1.0, 1.0);
+		        turnController.setAbsoluteTolerance(kToleranceDegrees);
+		        turnController.setContinuous(true);
+		        
+		        /* Add the PID Controller to the Test-mode dashboard, allowing manual  */
+		        /* tuning of the Turn Controller's P, I and D coefficients.            */
+		        /* Typically, only the P value needs to be modified.                   */
+		        LiveWindow.addActuator("DriveSystem", "RotateController", turnController);
+		// end rotate to angle 	
 		
 	}
 
@@ -445,7 +480,9 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		robotDrive.setSafetyEnabled(true);
 		while (isOperatorControl() && isEnabled()) {
-
+			
+			boolean rotateToAngle = false;
+            
 			// Use the joystick X axis for lateral movement, Y axis for forward
 			// movement, and Z axis for rotation.
 			// This sample does not use field-oriented drive, so the gyro input
@@ -498,11 +535,20 @@ public class Robot extends IterativeRobot {
 	          }
 	          if (stick.getRawButton(7)) {
 	        	//  startClimb();
-	          shooterlight.set(true);
+	            //shooterlight.set(true);
+	        	  turnController.setSetpoint(0.0f);
+	        	  //turnController.setSetpoint(90.0f);
+	        	  //turnController.setSetpoint(179.9f);
+	        	 // turnController.setSetpoint(-90.0f);
+	                rotateToAngle = true;
+	                turnController.enable();
+	                currentRotationRate = rotateToAngleRate;
+	                robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), currentRotationRate, ahrs.getAngle());
+					
 	          }
 	          if (stick.getRawButton(8)) {
 	        	//  stopClimb();
-	          shooterlight.set(false);
+	            //shooterlight.set(false);
 	          }
 	         // if (stick.getRawButton(9)) {
 	        	//  reverseClimb();
@@ -524,4 +570,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 	}
+
+	@Override
+    /* This function is invoked periodically by the PID Controller, */
+    /* based upon navX MXP yaw angle input and PID Coefficients.    */
+    public void pidWrite(double output) {
+        rotateToAngleRate = output;
+    }
 }

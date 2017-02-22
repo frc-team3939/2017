@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.RobotDrive.MotorType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import com.ctre.CANTalon.TalonControlMode;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.kauailabs.navx.frc.AHRS;
@@ -20,7 +21,9 @@ import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+
 
 
 
@@ -51,7 +54,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	CANTalon kFrontRightChannel = new CANTalon(28);
 	CANTalon kRearRightChannel = new CANTalon(24);
 	
-	DigitalOutput shooterlight;
+	DigitalOutput shooterlight, gearlight;
 	
 	CANTalon kGearRight = new CANTalon(29);
 	CANTalon kGearLeft = new CANTalon(22);
@@ -99,6 +102,15 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     static final double kToleranceDegrees = 2.0f;
     // end turn to angle stuff
 	
+    //drive to distance stuff
+    Encoder drivewheelencoder = new Encoder(0, 1, true, EncodingType.k4X);
+    public static final double WHEEL_DIAMETER = 4; //Will need to be set before use
+	public static final double PULSE_PER_REVOLUTION = 1440;
+	public static final double ENCODER_GEAR_RATIO = 0;
+	public static final double GEAR_RATIO = 12.75 / 1;
+	public static final double FUDGE_FACTOR = 1.0;
+	final double distancePerPulse = Math.PI * WHEEL_DIAMETER / PULSE_PER_REVOLUTION / ENCODER_GEAR_RATIO / GEAR_RATIO * FUDGE_FACTOR;
+	// end drive to distance
 	
 	public void initTalonEncoders(){
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
@@ -172,6 +184,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
 		shooterlight = new DigitalOutput(9);
+		gearlight = new DigitalOutput(8);
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(1); //set PMW Location
@@ -212,6 +225,8 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		        LiveWindow.addActuator("DriveSystem", "RotateController", turnController);
 		// end rotate to angle 	
 		
+		drivewheelencoder.setDistancePerPulse(distancePerPulse);
+		        
 	}
 
 	public void opengears() {
@@ -543,16 +558,25 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	                rotateToAngle = true;
 	                turnController.enable();
 	                currentRotationRate = rotateToAngleRate;
-	                robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), currentRotationRate, ahrs.getAngle());
+	                robotDrive.mecanumDrive_Cartesian(0, 0, currentRotationRate, ahrs.getAngle());
 					
 	          }
 	          if (stick.getRawButton(8)) {
-	        	//  stopClimb();
+	        	  double encoderDistanceReading = drivewheelencoder.getDistance();
+	      		  SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+	      		  while (encoderDistanceReading < 36) {
+	      			  robotDrive.mecanumDrive_Cartesian(0, .2, 0, 0);
+	      		  }
+					
+	        	  
+	        	  //  stopClimb();
 	            //shooterlight.set(false);
 	          }
-	         // if (stick.getRawButton(9)) {
-	        	//  reverseClimb();
-	          //}
+	          if (stick.getRawButton(9)) {
+	        	gearlight.set(true);
+	        	  
+	        	  //  reverseClimb();
+	          }
         	  if (stick.getRawButton(10)) {
         		  opengears();
         	  }

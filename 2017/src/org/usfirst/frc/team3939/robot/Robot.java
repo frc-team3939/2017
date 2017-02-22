@@ -46,7 +46,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     //SendableChooser<String> HeightOffset = new SendableChooser<>();
     SendableChooser<String> atomtype = new SendableChooser<>();
     
-	RobotDrive robotDrive;
+	RobotDrive robotDrive, tankDrive;
 
 	// Channels for the wheels
 	CANTalon kFrontLeftChannel = new CANTalon(27); 		/* device IDs here (1 of 2) */
@@ -203,6 +203,8 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 																// robot
 		robotDrive.setExpiration(0.1);
 		
+		tankDrive = new RobotDrive(kRearLeftChannel, kRearRightChannel);
+		
 		try {
 	          /* Communicate w/navX-MXP via the MXP SPI Bus.                                     */
 	          /* Alternatively:  I2C.Port.kMXP, SerialPort.Port.kMXP or SerialPort.Port.kUSB     */
@@ -226,17 +228,19 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		// end rotate to angle 	
 		
 		drivewheelencoder.setDistancePerPulse(distancePerPulse);
+		drivewheelencoder.reset();
+  	  
 		        
 	}
 
 	public void opengears() {
-		kGearRight.set(.4); 
-		kGearLeft.set(-.4); 
+		kGearRight.set(-.4); 
+		kGearLeft.set(.4); 
 	}
 	
 	public void closegears() {
-		kGearRight.set(-.4); 
-		kGearLeft.set(.4); 
+		kGearRight.set(.4); 
+		kGearLeft.set(-.4); 
 	}
 	
 	public void startintake() {
@@ -250,7 +254,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		IntakeMotor.set(IntakePower); 
     }
 
-	public void startConveyor() {
+	public void startConveyor() { 
 		RightConveyorMotor.set(-ConveyorPower); 
 		LeftConveyorMotor.set(ConveyorPower); 
     }
@@ -455,6 +459,8 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
+		
+		
 	}
 
 	/**
@@ -486,10 +492,29 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 			// Put default auto code here
 			break;
 		}
+		
+		//double encoderDistanceReading = drivewheelencoder.get();
+		//SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+		
+		//kFrontLeftChannel.set(-.4);
+		//kRearLeftChannel.set(-.4); 
+		//kFrontRightChannel.set(-.4);
+		//kRearRightChannel.set(-.4);
+		//if (encoderDistanceReading < -644) {
+			//kFrontLeftChannel.stopMotor();
+	//		kRearLeftChannel.stopMotor();
+		//	kFrontRightChannel.stopMotor(); 
+	//		kRearRightChannel.stopMotor();
+		//	kFrontLeftChannel.reset();
+//			kRearLeftChannel.reset();
+	//		kFrontRightChannel.reset();
+		//	kRearRightChannel.reset();
+			
+		//}
 	}
 
 	/**
-	 * This function is called periodically during operator control
+	 * This function is called periodically during operator control 
 	 */
 	@Override
 	public void teleopPeriodic() {
@@ -551,8 +576,8 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	          if (stick.getRawButton(7)) {
 	        	//  startClimb();
 	            //shooterlight.set(true);
-	        	  turnController.setSetpoint(0.0f);
-	        	  //turnController.setSetpoint(90.0f);
+	        	  //turnController.setSetpoint(0.0f);
+	        	  turnController.setSetpoint(90.0f);
 	        	  //turnController.setSetpoint(179.9f);
 	        	 // turnController.setSetpoint(-90.0f);
 	                rotateToAngle = true;
@@ -562,10 +587,12 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 					
 	          }
 	          if (stick.getRawButton(8)) {
-	        	  double encoderDistanceReading = drivewheelencoder.getDistance();
+	        	  double encoderDistanceReading = drivewheelencoder.get();
 	      		  SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
-	      		  while (encoderDistanceReading < 36) {
-	      			  robotDrive.mecanumDrive_Cartesian(0, .2, 0, 0);
+	      		    while (drivewheelencoder.get() > -644) {
+	      		    	SmartDashboard.putNumber("encoder reading", drivewheelencoder.get());
+	  	      		  
+	      			  robotDrive.mecanumDrive_Cartesian(0, .5, 0, 0);
 	      		  }
 					
 	        	  
@@ -584,7 +611,8 @@ public class Robot extends IterativeRobot  implements PIDOutput{
         		  closegears();
         	  }
 	          
-	          
+        	  double encoderDistanceReading = drivewheelencoder.get(); 
+      		  SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
 		}
 	}
 

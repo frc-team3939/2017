@@ -72,7 +72,6 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 
 	Talon Climb1Motor, Climb2Motor; 
 	double ClimbPower = 1;
-
 	
 	Servo ShooterStop;
 	double ShooterStopClosedLoc = .55;
@@ -80,13 +79,12 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	 
 	Joystick stick = new Joystick(0);
 	
-	boolean IntakeSetarted = false, ConveyorStarted = false, ShooterStarter = false, ClimbStarted = false;
+	boolean IntakeSetarted = false, ConveyorStarted = false, ShooterStarted = false, ClimbStarted = false;
 	
 	// turn to angle stuff
 	PIDController turnController;
     double rotateToAngleRate;
     double currentRotationRate;
-    
     
     /* The following PID Controller coefficients will need to be tuned */
     /* to match the dynamics of your drive system.  Note that the      */
@@ -103,15 +101,80 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     // end turn to angle stuff
 	
     //drive to distance stuff
+    double autodrivepower = .4;
     Encoder drivewheelencoder = new Encoder(0, 1, true, EncodingType.k4X);
     public static final double WHEEL_DIAMETER = 4; //Will need to be set before use
 	public static final double PULSE_PER_REVOLUTION = 1440;
-	public static final double ENCODER_GEAR_RATIO = 0;
-	public static final double GEAR_RATIO = 12.75 / 1;
+	public static final double ENCODER_GEAR_RATIO = 1;
+	public static final double GEAR_RATIO = 12.75;
 	public static final double FUDGE_FACTOR = 1.0;
 	final double distancePerPulse = Math.PI * WHEEL_DIAMETER / PULSE_PER_REVOLUTION / ENCODER_GEAR_RATIO / GEAR_RATIO * FUDGE_FACTOR;
 	// end drive to distance
 	
+	//Collision Detection 
+	double last_world_linear_accel_x;
+	double last_world_linear_accel_y;
+	final static double kCollisionThreshold_DeltaG = 0.5f;
+	// end Collision stuff
+	
+
+	/**
+	 * This function is run when the robot is first started up and should be
+	 * used for any initialization code.
+	 */
+	@Override
+	public void robotInit() {
+		smartDashBoardBsetup();
+		
+		initTalonEncoders();
+		
+		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
+		
+		ShooterStop = new Servo(8);  //ShooterStop
+		ShooterStop.set(ShooterStopClosedLoc); // set start location
+
+		shooterlight = new DigitalOutput(9);
+		gearlight = new DigitalOutput(8);
+		
+		RightConveyorMotor = new Talon(2); //set PMW Location
+		LeftConveyorMotor = new Talon(1); //set PMW Location
+
+		Climb1Motor = new Talon(4); //set PMW Location
+		Climb2Motor = new Talon(5); //set PMW Location
+
+		robotDrive = new RobotDrive(kFrontLeftChannel, kRearLeftChannel, kFrontRightChannel, kRearRightChannel);
+		robotDrive.setInvertedMotor(MotorType.kFrontLeft, true); // invert the left side motors
+		robotDrive.setInvertedMotor(MotorType.kRearLeft, true); // you may need to change or remove this to match your robot
+		robotDrive.setExpiration(0.1);
+		
+		try {
+	          /* Communicate w/navX-MXP via the MXP SPI Bus.                                     */
+	          /* Alternatively:  I2C.Port.kMXP, SerialPort.Port.kMXP or SerialPort.Port.kUSB     */
+	          /* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details. */
+	          ahrs = new AHRS(SPI.Port.kMXP); 
+	      } catch (RuntimeException ex ) {
+	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
+	      }
+		
+		// rotate to angle stuff
+				turnController = new PIDController(kP, kI, kD, kF, ahrs, this);
+		        turnController.setInputRange(-180.0f,  180.0f);
+		        turnController.setOutputRange(-1.0, 1.0);
+		        turnController.setAbsoluteTolerance(kToleranceDegrees);
+		        turnController.setContinuous(true);
+		        
+		        /* Add the PID Controller to the Test-mode dashboard, allowing manual  */
+		        /* tuning of the Turn Controller's P, I and D coefficients.            */
+		        /* Typically, only the P value needs to be modified.                   */
+		        LiveWindow.addActuator("DriveSystem", "RotateController", turnController);
+		// end rotate to angle 	
+		
+		drivewheelencoder.setDistancePerPulse(distancePerPulse);
+		drivewheelencoder.reset();
+  	  
+		        
+	}
+
 	public void initTalonEncoders(){
 		/* lets grab the 360 degree position of the MagEncoder's absolute position */
 		//int absolutePositionRight = kGearRight.getPulseWidthPosition() & 0xFFF; /* mask out the bottom12 bits, we don't care about the wrap arounds */
@@ -166,71 +229,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
         kGearLeft.enableForwardSoftLimit(true);
         kGearLeft.setForwardSoftLimit(ClosedPosition);
         kGearLeft.enableReverseSoftLimit(true);
-        kGearLeft.setReverseSoftLimit(-OpenPosition);	}
-	
-	/**
-	 * This function is run when the robot is first started up and should be
-	 * used for any initialization code.
-	 */
-	@Override
-	public void robotInit() {
-		smartDashBoardBsetup();
-		
-		initTalonEncoders();
-		
-		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
-		
-		ShooterStop = new Servo(8);  //ShooterStop
-		ShooterStop.set(ShooterStopClosedLoc); // set start location
-
-		shooterlight = new DigitalOutput(9);
-		gearlight = new DigitalOutput(8);
-		
-		RightConveyorMotor = new Talon(2); //set PMW Location
-		LeftConveyorMotor = new Talon(1); //set PMW Location
-
-		Climb1Motor = new Talon(4); //set PMW Location
-		Climb2Motor = new Talon(5); //set PMW Location
-
-		robotDrive = new RobotDrive(kFrontLeftChannel, kRearLeftChannel, kFrontRightChannel, kRearRightChannel);
-		robotDrive.setInvertedMotor(MotorType.kFrontLeft, true); // invert the
-																	// left side
-																	// motors
-		robotDrive.setInvertedMotor(MotorType.kRearLeft, true); // you may need
-																// to change or
-																// remove this
-																// to match your
-																// robot
-		robotDrive.setExpiration(0.1);
-		
-		tankDrive = new RobotDrive(kRearLeftChannel, kRearRightChannel);
-		
-		try {
-	          /* Communicate w/navX-MXP via the MXP SPI Bus.                                     */
-	          /* Alternatively:  I2C.Port.kMXP, SerialPort.Port.kMXP or SerialPort.Port.kUSB     */
-	          /* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details. */
-	          ahrs = new AHRS(SPI.Port.kMXP); 
-	      } catch (RuntimeException ex ) {
-	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
-	      }
-		
-		// rotate to angle stuff
-				turnController = new PIDController(kP, kI, kD, kF, ahrs, this);
-		        turnController.setInputRange(-180.0f,  180.0f);
-		        turnController.setOutputRange(-1.0, 1.0);
-		        turnController.setAbsoluteTolerance(kToleranceDegrees);
-		        turnController.setContinuous(true);
-		        
-		        /* Add the PID Controller to the Test-mode dashboard, allowing manual  */
-		        /* tuning of the Turn Controller's P, I and D coefficients.            */
-		        /* Typically, only the P value needs to be modified.                   */
-		        LiveWindow.addActuator("DriveSystem", "RotateController", turnController);
-		// end rotate to angle 	
-		
-		drivewheelencoder.setDistancePerPulse(distancePerPulse);
-		drivewheelencoder.reset();
-  	  
-		        
+        kGearLeft.setReverseSoftLimit(-OpenPosition);	
 	}
 
 	public void opengears() {
@@ -244,9 +243,11 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	}
 	
 	public void startintake() {
+		IntakeSetarted = true;
 		IntakeMotor.set(-IntakePower); 
     }
 	public void stopintake() {
+		IntakeSetarted = false;
 		//IntakeMotor.stopMotor();
 		IntakeMotor.set(0);
     }
@@ -255,10 +256,12 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     }
 
 	public void startConveyor() { 
+		ConveyorStarted = true;
 		RightConveyorMotor.set(-ConveyorPower); 
 		LeftConveyorMotor.set(ConveyorPower); 
     }
 	public void stopConveyor() {
+		ConveyorStarted = false;
 		RightConveyorMotor.stopMotor();
 		LeftConveyorMotor.stopMotor();
     }
@@ -268,10 +271,12 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     }
 
 	public void startClimb() {
+		ClimbStarted = true;
 		Climb1Motor.set(ClimbPower); 
 		Climb2Motor.set(ClimbPower); 
     }
 	public void stopClimb() {
+		ClimbStarted = false;
 		Climb1Motor.stopMotor();
 		Climb2Motor.stopMotor();
     }
@@ -281,6 +286,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     }
 	
 	public void startshooter() {
+		ShooterStarted = true;
 		ShooterPower = .85; //set shooter power level
 		ShooterMotor.set(ShooterPower); 
     	Timer.delay(1);
@@ -289,13 +295,13 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     }
 	
 	public void stopshooter() {
+		ShooterStarted = false;
 		//need to stop conveyor
 		ShooterStop.set(ShooterStopClosedLoc); //Shooter Servo location
 		//Timer.delay(3.0);
     	//ShooterMotor.stopMotor();			
     	ShooterMotor.set(0);			
 	}
-	
 	
 	public void smartDashBoardBsetup() {
 		
@@ -439,6 +445,69 @@ public class Robot extends IterativeRobot  implements PIDOutput{
         
 	}
 	
+	public void driveforward(double inches){
+		drivewheelencoder.reset();
+		double encoderDistanceReading = drivewheelencoder.getDistance();
+		SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+		
+		while (encoderDistanceReading < inches){
+			encoderDistanceReading = drivewheelencoder.getDistance();
+			SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+			kFrontLeftChannel.set(-autodrivepower);
+			kRearLeftChannel.set(-autodrivepower); 
+			kFrontRightChannel.set(-autodrivepower);
+			kRearRightChannel.set(-autodrivepower);
+		} 
+
+		kFrontLeftChannel.stopMotor();
+		kRearLeftChannel.stopMotor();
+		kFrontRightChannel.stopMotor(); 
+		kRearRightChannel.stopMotor();
+	}
+	
+	public void drivereverse(double inches){
+		drivewheelencoder.reset();
+		double encoderDistanceReading = drivewheelencoder.getDistance();
+		SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+		
+		while (encoderDistanceReading > inches){
+			encoderDistanceReading = drivewheelencoder.getDistance();
+			SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
+			kFrontLeftChannel.set(autodrivepower);
+			kRearLeftChannel.set(autodrivepower); 
+			kFrontRightChannel.set(autodrivepower);
+			kRearRightChannel.set(autodrivepower);
+		} 
+
+		kFrontLeftChannel.stopMotor();
+		kRearLeftChannel.stopMotor();
+		kFrontRightChannel.stopMotor(); 
+		kRearRightChannel.stopMotor();
+	}
+
+	public void turntoangle(double angle){
+		turnController.setSetpoint(angle);
+        turnController.enable();
+        currentRotationRate = rotateToAngleRate;
+        robotDrive.mecanumDrive_Cartesian(0, 0, currentRotationRate, ahrs.getAngle());
+	}
+	
+	public boolean DetectCollision (){
+		boolean collisionDetected = false;
+        double curr_world_linear_accel_x = ahrs.getWorldLinearAccelX();
+        double currentJerkX = curr_world_linear_accel_x - last_world_linear_accel_x;
+        last_world_linear_accel_x = curr_world_linear_accel_x;
+        double curr_world_linear_accel_y = ahrs.getWorldLinearAccelY();
+        double currentJerkY = curr_world_linear_accel_y - last_world_linear_accel_y;
+        last_world_linear_accel_y = curr_world_linear_accel_y;
+        
+        if ( ( Math.abs(currentJerkX) > kCollisionThreshold_DeltaG ) ||
+             ( Math.abs(currentJerkY) > kCollisionThreshold_DeltaG) ) {
+            collisionDetected = true;
+        }
+        SmartDashboard.putBoolean(  "CollisionDetected", collisionDetected);
+        return collisionDetected;
+	}
 	
 	
 	/**
@@ -460,7 +529,6 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		// defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
 		
-		
 	}
 
 	/**
@@ -471,9 +539,23 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 		switch (autoSelected) {
 		case "Red1":
 			// Put custom auto code here
+			driveforward(48); // drive forward 48 inches ?
+			Timer.delay(2.0);		    //    for 2 seconds
+			drivereverse(48);
 			break;
+			
 		case "Red2":
 			// Put custom auto code here
+			turntoangle(0.0f);
+			Timer.delay(2.0);		    //    for 2 seconds
+			turntoangle(90f);
+			Timer.delay(2.0);		    //    for 2 seconds
+			turntoangle(-90f);
+			Timer.delay(2.0);		    //    for 2 seconds
+			turntoangle(180f);
+			Timer.delay(2.0);		    //    for 2 seconds
+			turntoangle(-180f);
+			
 			break;
 		case "Red3":
 			// Put custom auto code here
@@ -493,24 +575,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 			break;
 		}
 		
-		//double encoderDistanceReading = drivewheelencoder.get();
-		//SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
-		
-		//kFrontLeftChannel.set(-.4);
-		//kRearLeftChannel.set(-.4); 
-		//kFrontRightChannel.set(-.4);
-		//kRearRightChannel.set(-.4);
-		//if (encoderDistanceReading < -644) {
-			//kFrontLeftChannel.stopMotor();
-	//		kRearLeftChannel.stopMotor();
-		//	kFrontRightChannel.stopMotor(); 
-	//		kRearRightChannel.stopMotor();
-		//	kFrontLeftChannel.reset();
-//			kRearLeftChannel.reset();
-	//		kFrontRightChannel.reset();
-		//	kRearRightChannel.reset();
-			
-		//}
+
 	}
 
 	/**
@@ -544,8 +609,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 			}
 						
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
-			
-			
+						
 
 	          smartDashBoardDisplay();
 	          
@@ -576,24 +640,11 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	          if (stick.getRawButton(7)) {
 	        	//  startClimb();
 	            //shooterlight.set(true);
-	        	  //turnController.setSetpoint(0.0f);
-	        	  turnController.setSetpoint(90.0f);
-	        	  //turnController.setSetpoint(179.9f);
-	        	 // turnController.setSetpoint(-90.0f);
-	                rotateToAngle = true;
-	                turnController.enable();
-	                currentRotationRate = rotateToAngleRate;
-	                robotDrive.mecanumDrive_Cartesian(0, 0, currentRotationRate, ahrs.getAngle());
+	        	  
 					
 	          }
 	          if (stick.getRawButton(8)) {
-	        	  double encoderDistanceReading = drivewheelencoder.get();
-	      		  SmartDashboard.putNumber("encoder reading", encoderDistanceReading);
-	      		    while (drivewheelencoder.get() > -644) {
-	      		    	SmartDashboard.putNumber("encoder reading", drivewheelencoder.get());
-	  	      		  
-	      			  robotDrive.mecanumDrive_Cartesian(0, .5, 0, 0);
-	      		  }
+	        	  driveforward(48); // drive forward 48 inches ?
 					
 	        	  
 	        	  //  stopClimb();

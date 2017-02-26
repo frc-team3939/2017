@@ -42,7 +42,7 @@ public class Robot extends IterativeRobot  implements PIDOutput{
 	String autoSelected;
 	SendableChooser<String> DriveType = new SendableChooser<>();
     //SendableChooser<String> MaxSpeed = new SendableChooser<>();
-    //SendableChooser<String> shooterSpeed = new SendableChooser<>();
+    SendableChooser<String> shooterSpeed = new SendableChooser<>();
     //SendableChooser<String> HeightOffset = new SendableChooser<>();
     SendableChooser<String> atomtype = new SendableChooser<>();
     
@@ -329,19 +329,29 @@ public class Robot extends IterativeRobot  implements PIDOutput{
     	atomtype.addDefault("None", "None");
     	SmartDashboard.putData("Autonomous Type", atomtype);
     	
-    	/*
+    	
     	shooterSpeed.addObject("100%", "1");
+    	shooterSpeed.addObject("95%", ".95");
     	shooterSpeed.addObject("90%", ".9");
+    	shooterSpeed.addObject("85%", ".85");
     	shooterSpeed.addDefault("80%", ".8");
+    	shooterSpeed.addObject("75%", ".75");
     	shooterSpeed.addObject("70%", ".7");
+    	shooterSpeed.addObject("65%", ".65");
     	shooterSpeed.addObject("60%", ".6");
+    	shooterSpeed.addObject("55%", ".55");
     	shooterSpeed.addObject("50%", ".5");
+    	shooterSpeed.addObject("45%", ".45");
     	shooterSpeed.addObject("40%", ".4");
+    	shooterSpeed.addObject("35%", ".35");
     	shooterSpeed.addObject("30%", ".3");
+    	shooterSpeed.addObject("25%", ".25");
     	shooterSpeed.addObject("20%", ".2");
+    	shooterSpeed.addObject("15%", ".15");
     	shooterSpeed.addObject("10%", ".1");
+    	shooterSpeed.addObject("5%", ".05");
     	SmartDashboard.putData("Shooter Speed %", shooterSpeed);
-    	*/
+    	
     	/*
     	HeightOffset.addObject("160", "160");
     	HeightOffset.addObject("150", "150");

@@ -47,6 +47,8 @@ public class Robot extends IterativeRobot  implements PIDOutput {
     SendableChooser<String> atomtype = new SendableChooser<>();
     
 	RobotDrive robotDrive, tankDrive;
+	
+	PowerDistributionPanel pdp;
 
 	// Channels for the wheels
 	CANTalon kFrontLeftChannel = new CANTalon(27); 		/* device IDs here (1 of 2) */
@@ -92,12 +94,12 @@ public class Robot extends IterativeRobot  implements PIDOutput {
     /* controllers by displaying a form where you can enter new P, I,  */
     /* and D constants and test the mechanism.                         */
     
-    static final double kP = 0.03;
-    static final double kI = 0.00;
-    static final double kD = 0.00;
-    static final double kF = 0.00;
+    static final double kP = 0.05;
+    static final double kI = 0.1;
+    static final double kD = 0.05;
+    static final double kF = 0.0;
     
-    static final double kToleranceDegrees = 2.0f;
+    static final double kToleranceDegrees = 0.5f;
     // end turn to angle stuff
 	
     //drive to distance stuff
@@ -115,7 +117,8 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	double last_world_linear_accel_x;
 	double last_world_linear_accel_y;
 	final static double kCollisionThreshold_DeltaG = 0.5f;
-	// end Collision stuff
+	// end Collision stuff 
+	
 	
 
 	/**
@@ -128,7 +131,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		
 		initTalonEncoders();
 		
-		//CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
+		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
 		
 		ShooterStop = new Servo(8);  //ShooterStop
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
@@ -171,6 +174,13 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		
 		drivewheelencoder.setDistancePerPulse(distancePerPulse);
 		drivewheelencoder.reset();
+		
+		shooterlight.set(true);
+		gearlight.set(true);
+		
+		pdp = new PowerDistributionPanel(0);
+		
+	
   	  
 		        
 	}
@@ -272,9 +282,22 @@ public class Robot extends IterativeRobot  implements PIDOutput {
     }
 
 	public void startClimb() {
-		ClimbStarted = true;
-		Climb1Motor.set(ClimbPower); 
-		Climb2Motor.set(ClimbPower); 
+		int counter = 0;
+		//while (stick.getRawButton(7)) {
+			ClimbStarted = true;
+			Climb1Motor.set(ClimbPower); 
+			Climb2Motor.set(ClimbPower);
+			//counter++;
+			//if (counter > 1000) {
+			//	reverseConveyor();
+			//	reverseintake();
+			//}
+			//if (counter > 2000) {
+			//	stopConveyor();
+			//	stopintake();
+			//}
+		//}
+		//stopClimb();
     }
 	public void stopClimb() {
 		ClimbStarted = false;
@@ -343,15 +366,6 @@ public class Robot extends IterativeRobot  implements PIDOutput {
     	shooterSpeed.addObject("60%", .6);
     	shooterSpeed.addObject("55%", .55);
     	shooterSpeed.addObject("50%", .5);
-    	shooterSpeed.addObject("45%", .45);
-    	shooterSpeed.addObject("40%", .4);
-    	shooterSpeed.addObject("35%", .35);
-    	shooterSpeed.addObject("30%", .3);
-    	shooterSpeed.addObject("25%", .25);
-    	shooterSpeed.addObject("20%", .2);
-    	shooterSpeed.addObject("15%", .15);
-    	shooterSpeed.addObject("10%", .1);
-    	shooterSpeed.addObject("5%", .05);
     	SmartDashboard.putData("Shooter Speed %", shooterSpeed);
     	
     	/*
@@ -458,8 +472,6 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	}
 	
 	public void driveforward(double inches){
-
-		//SmartDashboard.putString("testing", "driveforward start");
 		drivewheelencoder.reset();
 		double encoderDistanceReading = drivewheelencoder.get();
 		SmartDashboard.putNumber("driveencoder reading", -encoderDistanceReading);
@@ -471,7 +483,6 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		}
 		
 		while (Math.abs(inches)*15 > Math.abs(encoderDistanceReading)){
-			//SmartDashboard.putString("testing", "in loop");
 			encoderDistanceReading = drivewheelencoder.get();
 			SmartDashboard.putNumber("driveencoder reading", -encoderDistanceReading);
 			kFrontLeftChannel.set(throttle);
@@ -487,31 +498,49 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		kRearRightChannel.stopMotor();
 	}
 	
-	public void drivereverse(double inches){
-		drivewheelencoder.reset();
-		double encoderDistanceReading = drivewheelencoder.get();
-		SmartDashboard.putNumber("driveencoder reading", -encoderDistanceReading);
-		
-		while (-encoderDistanceReading > inches*15){
-			encoderDistanceReading = drivewheelencoder.get();
-			SmartDashboard.putNumber("driveencoder reading", -encoderDistanceReading);
-			kFrontLeftChannel.set(autodrivepower);
-			kRearLeftChannel.set(autodrivepower); 
-			kFrontRightChannel.set(autodrivepower);
-			kRearRightChannel.set(autodrivepower);
-		} 
+	public void autoshoot(){
+		double curangle = ahrs.getAngle();
+		double b_angle = SmartDashboard.getDouble("b_angle");
+		double shootangle = curangle - 90 + b_angle;
+		double turnangle = shootangle;
+		turntoangle(turnangle);
+		double b_height = SmartDashboard.getDouble("b_heigth");
+		double b_distance = (10 * 270)/b_height;
+		//ShooterPower = shooterSpeed.getSelected();
+		double curpower =  pdp.getVoltage();
+		ShooterPower = (0.25096*b_distance+54.455065)*(12/curpower); // shotpower = (0.25096*distance+54.455065)*(12/currpower)
 
-		kFrontLeftChannel.stopMotor();
-		kRearLeftChannel.stopMotor();
-		kFrontRightChannel.stopMotor(); 
-		kRearRightChannel.stopMotor();
+		ShooterStarted = true;
+		//ShooterPower = .85; //set shooter power level
+		ShooterMotor.set(ShooterPower); 
+    	Timer.delay(1);
+    	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
+    	//need to start conveyor
 	}
-
+		
+	
 	public void turntoangle(double angle){
 		turnController.setSetpoint(angle);
         turnController.enable();
-        currentRotationRate = rotateToAngleRate;
-        robotDrive.mecanumDrive_Cartesian(0, 0, currentRotationRate, 0);
+        double hiloc = angle + kToleranceDegrees;
+        double lowloc = angle - kToleranceDegrees;
+        SmartDashboard.putNumber("currloc", ahrs.getAngle());
+        SmartDashboard.putNumber("rotateToAngleRate", rotateToAngleRate);
+        SmartDashboard.putBoolean("onTarget", turnController.onTarget());
+        SmartDashboard.putNumber("lowloc", lowloc);
+        SmartDashboard.putNumber("hiloc", hiloc);
+	       
+        while(ahrs.getAngle() < lowloc || ahrs.getAngle() >hiloc){
+	        SmartDashboard.putNumber("currloc", ahrs.getAngle());
+	        SmartDashboard.putNumber("rotateToAngleRate", rotateToAngleRate);
+	        SmartDashboard.putBoolean("onTarget", turnController.onTarget());
+	        
+	        currentRotationRate = rotateToAngleRate;
+	        robotDrive.mecanumDrive_Cartesian(0, 0, -currentRotationRate, ahrs.getAngle());
+	        if (stick.getRawButton(12)) {
+	        	break;
+	        }
+		}
 	}
 	
 	public boolean DetectCollision (){
@@ -523,9 +552,9 @@ public class Robot extends IterativeRobot  implements PIDOutput {
         double currentJerkY = curr_world_linear_accel_y - last_world_linear_accel_y;
         last_world_linear_accel_y = curr_world_linear_accel_y;
         
-        if ( ( Math.abs(currentJerkX) > kCollisionThreshold_DeltaG ) ||
-             ( Math.abs(currentJerkY) > kCollisionThreshold_DeltaG) ) {
-            collisionDetected = true;
+        if ( ( Math.abs(currentJerkX) > kCollisionThreshold_DeltaG ) ||  
+             ( Math.abs(currentJerkY) > kCollisionThreshold_DeltaG) ) { 
+            collisionDetected = true;   
         }
         SmartDashboard.putBoolean(  "CollisionDetected", collisionDetected);
         return collisionDetected;
@@ -552,36 +581,74 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		System.out.println("Auto selected: " + autoSelected);
 		switch (autoSelected) {
 		case "Red1":
-			// Put custom auto code here
-			driveforward(48); // drive forward 48 inches ?
-			Timer.delay(2.0);		    //    for 2 seconds
-			driveforward(-48);
+			ahrs.reset();
+			driveforward(105); // drive forward 48 inches ?
+			Timer.delay(1.0);		    //    for 2 seconds
+			turntoangle(55f);
+			Timer.delay(1.0);
+			driveforward(32);  // 50 for gear
+			//opengears();
+  		  	//Timer.delay(0.5);
+  		  	//driveforward(-18);
+  		  	//closegears();
 			break;
 			
 		case "Red2":
-			// Put custom auto code here
-			//turntoangle(0.0f);
-			//Timer.delay(2.0);		    //    for 2 seconds
-			turntoangle(90f);
-			//Timer.delay(2.0);		    //    for 2 seconds
-			//turntoangle(-90f);
-			//Timer.delay(2.0);		    //    for 2 seconds
-			//turntoangle(180f);
-			//Timer.delay(2.0);		    //    for 2 seconds
-			//turntoangle(-180f);
+			ahrs.reset();
+			 driveforward(110);
+  		  //opengears();
+  		  //Timer.delay(0.5);
+  		  //driveforward(-12);
+  		  //closegears();
 			
 			break;
 		case "Red3":
-			// Put custom auto code here
+			ahrs.reset();
+			driveforward(105);
+			Timer.delay(1.0);
+			turntoangle(-55f);
+			Timer.delay(1.0);
+			driveforward(32);
+  		  	//opengears();
+  		  	//Timer.delay(0.5);
+  		  	//driveforward(-12);
+  		  	//closegears();
 			break;
 		case "Blue1":
-			// Put custom auto code here
+			ahrs.reset();
+			driveforward(105); // drive forward 48 inches ?
+			Timer.delay(1.0);		    //    for 2 seconds
+			turntoangle(55f);
+			Timer.delay(1.0);
+			driveforward(32);  // 50 for gear
+			//opengears();
+  		  	//Timer.delay(0.5);
+  		  	//driveforward(-12);
+  		  	//closegears();
+  		  	//turntoangle(145f);
+  		  	//autoshoot();
 			break;
 		case "Blue2":
-			// Put custom auto code here
+			ahrs.reset();
+			  driveforward(110);
+	  		  //opengears();
+	  		  //Timer.delay(0.5);
+	  		  //driveforward(-12);
+	  		  //closegears();
+	  		  //turntoangle(179f);
+	  		  //autoshoot();
 			break;
 		case "Blue3":
-			// Put custom auto code here
+			ahrs.reset();
+			driveforward(105); 
+			Timer.delay(1.0);
+			turntoangle(-55f);
+			Timer.delay(1.0);
+			driveforward(32);
+  		  	//opengears();
+  		  	//Timer.delay(0.5);
+  		  	//driveforward(-12);
+  		  	//closegears();
 			break;
 		case "None":
 		default:
@@ -640,8 +707,9 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	          if (stick.getRawButton(2)) {
 	        	  stopshooter();
 	          }
-	          if (stick.getRawButton(5)) {
+	          if (stick.getRawButton(3)) {
 	        	  startintake();
+	        	  startConveyor();
 	          }
 	          if (stick.getRawButton(6)) {
 	        	  stopintake();
@@ -659,9 +727,10 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	        	//  reverseConveyor();
 	          }
 	          if (stick.getRawButton(7)) {
-	        	//  startClimb();
+	        	startClimb(); // Hold Button to Climb
+	        	
 	            //shooterlight.set(true);
-	            turntoangle(90f);
+	            //turntoangle(90f);
 	        	  
 					
 	          }
@@ -671,15 +740,17 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	        	 // driveforward(-48);
 					
 	        	  
-	        	   // stopClimb();
-	            shooterlight.set(false);
+	        	    stopClimb();
+	        	  //turntoangle(90f);
+	            //shooterlight.set(false);
 	          }
 	          if (stick.getRawButton(9)) {
-	        	//gearlight.set(true);
+	        	  autoshoot();
 	        	  
-	        	    reverseClimb();
+	        	
+	        	    //reverseClimb();  
 	          }
-        	  if (stick.getRawButton(10)) {
+        	  if (stick.getRawButton(5)) { 
         		  opengears();
         		  Timer.delay(0.5);
         		  driveforward(-12);
@@ -692,17 +763,19 @@ public class Robot extends IterativeRobot  implements PIDOutput {
         	  double encoderDistanceReading = drivewheelencoder.get(); 
       		  SmartDashboard.putNumber("encoder reading", -encoderDistanceReading);
       		  System.out.println(encoderDistanceReading);
-      		  
+      		    
       		  SmartDashboard.putNumber("kGearRight", kGearRight.getPosition() );
       		  SmartDashboard.putNumber("kGearLeft", kGearLeft.getPosition() );
+      		 SmartDashboard.putNumber("currloc", ahrs.getAngle());
+  	       
 		}  
 	}
 
 	/**
 	 * This function is called periodically during test mode
 	 */
-	@Override
-	public void testPeriodic() {
+	@Override 
+	public void testPeriodic() { 
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
@@ -40,13 +41,15 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	AHRS ahrs;
 	
 	String autoSelected;
-	SendableChooser<String> DriveType = new SendableChooser<>();
-    //SendableChooser<String> MaxSpeed = new SendableChooser<>();
+	Boolean gearSelected, shotSelected;
+	
+	//SendableChooser<String> DriveType = new SendableChooser<>();
+    SendableChooser<Boolean> DelGear = new SendableChooser<>();
     SendableChooser<Double> shooterSpeed = new SendableChooser<>();
-    //SendableChooser<String> HeightOffset = new SendableChooser<>();
+    SendableChooser<Boolean> DelShot = new SendableChooser<>();
     SendableChooser<String> atomtype = new SendableChooser<>();
     
-	RobotDrive robotDrive, tankDrive;
+	RobotDrive robotDrive;
 	
 	PowerDistributionPanel pdp;
 
@@ -58,6 +61,8 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	
 	DigitalOutput shooterlight, gearlight;
 	
+	DigitalInput lSwitch, rSwitch;
+    	
 	CANTalon kGearRight = new CANTalon(29);
 	CANTalon kGearLeft = new CANTalon(22);
 	double ClosedPosition = 0.0;
@@ -80,6 +85,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	double ShooterStopOpenLoc = .7;
 	 
 	Joystick stick = new Joystick(0);
+	Joystick gamepad = new Joystick(1);
 	
 	boolean IntakeSetarted = false, ConveyorStarted = false, ShooterStarted = false, ClimbStarted = false;
 	
@@ -131,13 +137,16 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		
 		initTalonEncoders();
 		
-		CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
+		//CameraServer.getInstance().startAutomaticCapture(); //USB Cameras
 		
 		ShooterStop = new Servo(8);  //ShooterStop
 		ShooterStop.set(ShooterStopClosedLoc); // set start location
 
 		shooterlight = new DigitalOutput(9);
 		gearlight = new DigitalOutput(8);
+		
+		lSwitch = new DigitalInput(0);
+        rSwitch = new DigitalInput(1);
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(1); //set PMW Location
@@ -242,6 +251,25 @@ public class Robot extends IterativeRobot  implements PIDOutput {
         kGearLeft.enableReverseSoftLimit(true);
         kGearLeft.setReverseSoftLimit(0);	
 	}
+	
+	public void fixgears(){
+		kGearRight.enableForwardSoftLimit(false);
+        kGearRight.enableReverseSoftLimit(false);
+        kGearLeft.enableForwardSoftLimit(false);
+        kGearLeft.enableReverseSoftLimit(false);
+        
+		while (!lSwitch.get()) {
+			kGearLeft.set(-.1); 
+		}
+		kGearLeft.set(0);
+		
+		while (!rSwitch.get()) {
+			kGearRight.set(-.1); 
+		}
+		kGearRight.set(0);
+		
+		initTalonEncoders();
+	}
 
 	public void opengears() {
 		kGearRight.set(.4); 
@@ -257,11 +285,13 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		IntakeSetarted = true;
 		IntakeMotor.set(-IntakePower); 
     }
+	
 	public void stopintake() {
 		IntakeSetarted = false;
 		//IntakeMotor.stopMotor();
 		IntakeMotor.set(0);
     }
+	
 	public void reverseintake() {
 		IntakeMotor.set(IntakePower); 
     }
@@ -271,39 +301,33 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		RightConveyorMotor.set(-ConveyorPower); 
 		LeftConveyorMotor.set(ConveyorPower); 
     }
+	
 	public void stopConveyor() {
 		ConveyorStarted = false;
 		RightConveyorMotor.stopMotor();
 		LeftConveyorMotor.stopMotor();
     }
+	
 	public void reverseConveyor() {
 		RightConveyorMotor.set(ConveyorPower); 
 		LeftConveyorMotor.set(-ConveyorPower); 
     }
 
 	public void startClimb() {
-		int counter = 0;
 		//while (stick.getRawButton(7)) {
 			ClimbStarted = true;
 			Climb1Motor.set(ClimbPower); 
 			Climb2Motor.set(ClimbPower);
-			//counter++;
-			//if (counter > 1000) {
-			//	reverseConveyor();
-			//	reverseintake();
-			//}
-			//if (counter > 2000) {
-			//	stopConveyor();
-			//	stopintake();
-			//}
 		//}
 		//stopClimb();
     }
+	
 	public void stopClimb() {
 		ClimbStarted = false;
 		Climb1Motor.stopMotor();
 		Climb2Motor.stopMotor();
     }
+	
 	public void reverseClimb() {
 		Climb1Motor.set(-ClimbPower); 
 		Climb2Motor.set(-ClimbPower); 
@@ -330,20 +354,17 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	
 	public void smartDashBoardBsetup() {
 		
-		DriveType.addObject("Field Drive", "Field");
-    	DriveType.addDefault("Normal Drive", "Normal");
-    	SmartDashboard.putData("Drive Type", DriveType);
+		//DriveType.addObject("Field Drive", "Field");
+    	//DriveType.addDefault("Normal Drive", "Normal");
+    	//SmartDashboard.putData("Drive Type", DriveType);
 		
-    	//MaxSpeed.addDefault("100%", "1");
-    	//MaxSpeed.addObject("90%", ".9");
-    	//MaxSpeed.addObject("80%", ".8");
-    	//MaxSpeed.addObject("70%", ".7");
-    	//MaxSpeed.addObject("60%", ".6");
-    	//MaxSpeed.addObject("50%", ".5");
-    	//MaxSpeed.addObject("40%", ".4");
-    	//MaxSpeed.addObject("30%", ".3");
-    	//MaxSpeed.addObject("20%", ".2");
-    	//SmartDashboard.putData("Max Speed %", MaxSpeed);
+    	DelGear.addObject("Yes", true);
+    	DelGear.addDefault("No", false);
+    	SmartDashboard.putData("Deliver Gear", DelGear);
+    	
+    	DelShot.addObject("Yes", true);
+    	DelShot.addDefault("No", false);
+    	SmartDashboard.putData("Deliver Shot", DelShot);
     	
     	atomtype.addObject("Red 1", "Red1");
     	atomtype.addObject("Red 2", "Red2");
@@ -489,9 +510,13 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			kRearLeftChannel.set(throttle); 
 			kFrontRightChannel.set(throttle);
 			kRearRightChannel.set(throttle);
-
+			if (stick.getRawButton(12)) {
+	        	break;
+	        }
+			if (DetectCollision()) {
+				break;
+			}
 		} 
-		
 		kFrontLeftChannel.stopMotor();
 		kRearLeftChannel.stopMotor();
 		kFrontRightChannel.stopMotor(); 
@@ -505,11 +530,10 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		double turnangle = shootangle;
 		turntoangle(turnangle);
 		double b_height = SmartDashboard.getDouble("b_heigth");
-		double b_distance = (10 * 270)/b_height;
+		double b_distance = (10 * 270)/b_height;   //D = (H x F) / P
 		//ShooterPower = shooterSpeed.getSelected();
 		double curpower =  pdp.getVoltage();
 		ShooterPower = (0.25096*b_distance+54.455065)*(12/curpower); // shotpower = (0.25096*distance+54.455065)*(12/currpower)
-
 		ShooterStarted = true;
 		//ShooterPower = .85; //set shooter power level
 		ShooterMotor.set(ShooterPower); 
@@ -517,8 +541,22 @@ public class Robot extends IterativeRobot  implements PIDOutput {
     	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
     	//need to start conveyor
 	}
-		
 	
+	public void autogear(){
+		double curangle = ahrs.getAngle();
+		double g_angle = SmartDashboard.getDouble("g_angle");
+		double shootangle = curangle - 90 + g_angle;
+		double turnangle = shootangle;
+		turntoangle(turnangle);
+		double g_width = SmartDashboard.getDouble("g_width");
+		double g_distance = (10 * 270)/g_width;   //D = (H x F) / P
+		driveforward(g_distance);
+		opengears();
+		Timer.delay(0.5);
+		driveforward(-18);
+		closegears();
+	}
+			
 	public void turntoangle(double angle){
 		turnController.setSetpoint(angle);
         turnController.enable();
@@ -552,8 +590,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
         double currentJerkY = curr_world_linear_accel_y - last_world_linear_accel_y;
         last_world_linear_accel_y = curr_world_linear_accel_y;
         
-        if ( ( Math.abs(currentJerkX) > kCollisionThreshold_DeltaG ) ||  
-             ( Math.abs(currentJerkY) > kCollisionThreshold_DeltaG) ) { 
+        if ( ( Math.abs(currentJerkX) > kCollisionThreshold_DeltaG ) || ( Math.abs(currentJerkY) > kCollisionThreshold_DeltaG) ) { 
             collisionDetected = true;   
         }
         SmartDashboard.putBoolean(  "CollisionDetected", collisionDetected);
@@ -576,6 +613,8 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	@Override
 	public void autonomousInit() {
 		autoSelected = atomtype.getSelected();
+		gearSelected = DelGear.getSelected();
+		shotSelected = DelShot.getSelected();
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
@@ -584,75 +623,107 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			ahrs.reset();
 			driveforward(105); // drive forward 48 inches ?
 			Timer.delay(1.0);		    //    for 2 seconds
-			turntoangle(55f);
+			turntoangle(30f);
 			Timer.delay(1.0);
-			driveforward(32);  // 50 for gear
-			//opengears();
-  		  	//Timer.delay(0.5);
-  		  	//driveforward(-18);
-  		  	//closegears();
+			driveforward(49);  // 50 for gear
+			if (gearSelected) {
+				opengears();
+	  		  	Timer.delay(0.5);
+	  		  	driveforward(-18);
+	  		  	closegears();
+			}
 			break;
 			
 		case "Red2":
 			ahrs.reset();
-			 driveforward(110);
-  		  //opengears();
-  		  //Timer.delay(0.5);
-  		  //driveforward(-12);
-  		  //closegears();
-			
+			driveforward(109);
+			if (gearSelected) {
+				opengears();
+		  	  	Timer.delay(0.5);
+		  	  	driveforward(-18);
+		  	  	closegears();
+			}
+			if (shotSelected) {
+				ahrs.reset();
+				turntoangle(10f);
+				autoshoot();
+			}
 			break;
+
 		case "Red3":
 			ahrs.reset();
-			driveforward(105);
+			driveforward(118);
 			Timer.delay(1.0);
-			turntoangle(-55f);
+			turntoangle(-30f);
 			Timer.delay(1.0);
-			driveforward(32);
-  		  	//opengears();
-  		  	//Timer.delay(0.5);
-  		  	//driveforward(-12);
-  		  	//closegears();
+			driveforward(22);
+			if (gearSelected) {
+				opengears();
+		  	  	Timer.delay(0.5);
+		  	  	driveforward(-18);
+		  	  	closegears();
+			}
+			if (shotSelected) {
+				ahrs.reset();
+				turntoangle(110f);
+				autoshoot();
+			}
 			break;
+
 		case "Blue1":
 			ahrs.reset();
-			driveforward(105); // drive forward 48 inches ?
+			driveforward(118); // drive forward 48 inches ?
 			Timer.delay(1.0);		    //    for 2 seconds
-			turntoangle(55f);
+			turntoangle(30f);
 			Timer.delay(1.0);
-			driveforward(32);  // 50 for gear
-			//opengears();
-  		  	//Timer.delay(0.5);
-  		  	//driveforward(-12);
-  		  	//closegears();
-  		  	//turntoangle(145f);
-  		  	//autoshoot();
+			driveforward(22);  // 50 for gear
+			if (gearSelected) {
+				opengears();
+		  	  	Timer.delay(0.5);
+		  	  	driveforward(-18);
+		  	  	closegears();
+			}
+			if (shotSelected) {
+				ahrs.reset();
+				turntoangle(80f);
+				autoshoot();
+			}
 			break;
+
 		case "Blue2":
 			ahrs.reset();
-			  driveforward(110);
-	  		  //opengears();
-	  		  //Timer.delay(0.5);
-	  		  //driveforward(-12);
-	  		  //closegears();
-	  		  //turntoangle(179f);
-	  		  //autoshoot();
+			driveforward(109);
+			if (gearSelected) {
+				opengears();
+		  	  	Timer.delay(0.5);
+		  	  	driveforward(-18);
+		  	  	closegears();
+			}
+			if (shotSelected) {
+				ahrs.reset();
+				turntoangle(170f);
+				autoshoot();
+			}
 			break;
+
 		case "Blue3":
 			ahrs.reset();
 			driveforward(105); 
 			Timer.delay(1.0);
-			turntoangle(-55f);
+			turntoangle(-30f);
 			Timer.delay(1.0);
-			driveforward(32);
-  		  	//opengears();
-  		  	//Timer.delay(0.5);
-  		  	//driveforward(-12);
-  		  	//closegears();
+			driveforward(49);
+			if (gearSelected) {
+				opengears();
+		  	  	Timer.delay(0.5);
+		  	  	driveforward(-18);
+		  	  	closegears();
+			}
 			break;
+
 		case "None":
 		default:
-			// Put default auto code here
+			// Do Nothing
 			break;
 		}
 		
@@ -674,27 +745,26 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		robotDrive.setSafetyEnabled(true);
 		while (isOperatorControl() && isEnabled()) {
 			
-			boolean rotateToAngle = false;
-            
+           
 			// Use the joystick X axis for lateral movement, Y axis for forward
 			// movement, and Z axis for rotation.
 			// This sample does not use field-oriented drive, so the gyro input
 			// is set to zero.
 			
-			switch (DriveType.getSelected()) {
-			case "Field":
+			//switch (DriveType.getSelected()) {
+			//case "Field":
 				//field drive
-				if ( stick.getTrigger() ) {//trigger same as button 1
-		              ahrs.zeroYaw();
-		        }
-				robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
-				break;
-			case "Normal":
-			default:
+				//if ( stick.getTrigger() ) {//trigger same as button 1
+		        //      ahrs.zeroYaw();
+		        //}
+			//	robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), -stick.getZ(), ahrs.getAngle());
+			//	break;
+			//case "Normal":
+			//default:
 				//regular drive
 				robotDrive.mecanumDrive_Cartesian(-stick.getX(), -stick.getY(), (-stick.getZ()*.5), 0);
-				break;
-			}
+			//	break;
+			//}
 						
 			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
 						
@@ -711,62 +781,78 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	        	  startintake();
 	        	  startConveyor();
 	          }
-	          if (stick.getRawButton(6)) {
-	        	  stopintake();
-	          }
-	          if (stick.getRawButton(11)) {
-	        	  reverseintake();
-	          }
-	          if (stick.getRawButton(3)) {
-	        	  startConveyor();
-	          }
 	          if (stick.getRawButton(4)) {
 	        	  stopConveyor();
-	          }
-	          if (stick.getRawButton(6)) {
-	        	//  reverseConveyor();
-	          }
-	          if (stick.getRawButton(7)) {
-	        	startClimb(); // Hold Button to Climb
-	        	
-	            //shooterlight.set(true);
-	            //turntoangle(90f);
-	        	  
-					
-	          }
-	          if (stick.getRawButton(8)) {
-	        	//  driveforward(48); // drive forward 48 inches ?
-	        	 // Timer.delay(2.0);
-	        	 // driveforward(-48);
-					
-	        	  
-	        	    stopClimb();
-	        	  //turntoangle(90f);
-	            //shooterlight.set(false);
-	          }
-	          if (stick.getRawButton(9)) {
-	        	  autoshoot();
-	        	  
-	        	
-	        	    //reverseClimb();  
 	          }
         	  if (stick.getRawButton(5)) { 
         		  opengears();
         		  Timer.delay(0.5);
-        		  driveforward(-12);
+        		  driveforward(-18);
         		  closegears();
         	  }
-        	  if (stick.getRawButton(12)) {
-        		  closegears();
-        	  }
+	          if (stick.getRawButton(6)) {
+	        	  stopintake();
+	          }
+	          if (stick.getRawButton(7)) {
+	        	  startClimb(); 
+		      }
+	          if (stick.getRawButton(8)) {
+	        	  stopClimb();
+	          }
+	          if (stick.getRawButton(9)) {
+	        	  autoshoot();
+	          }
+	          if (stick.getRawButton(10)) {
+	        	  autogear();
+	          }
+	          if (stick.getRawButton(11)) {
+	        	  reverseintake();
+	          }
+	          if (stick.getRawButton(12)) {
+	        	  // used for abort code
+	          }
 	          
-        	  double encoderDistanceReading = drivewheelencoder.get(); 
-      		  SmartDashboard.putNumber("encoder reading", -encoderDistanceReading);
-      		  System.out.println(encoderDistanceReading);
-      		    
+	          
+	          
+	          if (gamepad.getRawButton(1)) {
+	        	  stopshooter();
+	          }
+	          if (gamepad.getRawButton(2)) { //purge button
+	        	  reverseintake();
+		          reverseConveyor();
+	          }
+	          if (gamepad.getRawButton(3)) {
+	        	  stopintake();
+	          }
+	          if (gamepad.getRawButton(4)) {
+	        	  reverseintake();
+	          }
+        	  if (gamepad.getRawButton(5)) { 
+	        	  stopConveyor();
+        	  }
+	          if (gamepad.getRawButton(6)) {
+		          //fixgears();  // need limit switches installed
+	          }
+	          if (gamepad.getRawButton(7)) {
+	        	  stopClimb();
+		      }
+	          if (gamepad.getRawButton(8)) {
+	        	  reverseClimb();  
+	          }
+	          if (gamepad.getRawButton(9)) {
+	        	  opengears();
+	          }
+	          if (gamepad.getRawButton(10)) {
+        		  closegears();
+	          }
+
+	          
+        	  //double encoderDistanceReading = drivewheelencoder.get(); 
+      		  SmartDashboard.putNumber("Drive encoder reading", -drivewheelencoder.get());
+      		  //System.out.println(encoderDistanceReading);
       		  SmartDashboard.putNumber("kGearRight", kGearRight.getPosition() );
       		  SmartDashboard.putNumber("kGearLeft", kGearLeft.getPosition() );
-      		 SmartDashboard.putNumber("currloc", ahrs.getAngle());
+      		  SmartDashboard.putNumber("currloc", ahrs.getAngle());
   	       
 		}  
 	}

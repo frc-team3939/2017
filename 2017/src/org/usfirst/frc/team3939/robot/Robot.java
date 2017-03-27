@@ -145,8 +145,8 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		shooterlight = new DigitalOutput(9);
 		gearlight = new DigitalOutput(8);
 		
-		lSwitch = new DigitalInput(0);
-        rSwitch = new DigitalInput(1);
+		lSwitch = new DigitalInput(2);
+        rSwitch = new DigitalInput(3);
 		
 		RightConveyorMotor = new Talon(2); //set PMW Location
 		LeftConveyorMotor = new Talon(1); //set PMW Location
@@ -513,9 +513,9 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			if (stick.getRawButton(12)) {
 	        	break;
 	        }
-			if (DetectCollision()) {
-				break;
-			}
+			//if (DetectCollision()) {
+				//break;
+			//}
 		} 
 		kFrontLeftChannel.stopMotor();
 		kRearLeftChannel.stopMotor();
@@ -524,31 +524,35 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	}
 	
 	public void autoshoot(){
-		double curangle = ahrs.getAngle();
-		double b_angle = SmartDashboard.getDouble("b_angle");
-		double shootangle = curangle - 90 + b_angle;
-		double turnangle = shootangle;
-		turntoangle(turnangle);
-		double b_height = SmartDashboard.getDouble("b_heigth");
-		double b_distance = (10 * 270)/b_height;   //D = (H x F) / P
-		//ShooterPower = shooterSpeed.getSelected();
-		double curpower =  pdp.getVoltage();
-		ShooterPower = (0.25096*b_distance+54.455065)*(12/curpower); // shotpower = (0.25096*distance+54.455065)*(12/currpower)
-		ShooterStarted = true;
-		//ShooterPower = .85; //set shooter power level
-		ShooterMotor.set(ShooterPower); 
-    	Timer.delay(1);
-    	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
-    	//need to start conveyor
+		ahrs.reset();
+		double currangle = ahrs.getAngle();
+		double b_angle = SmartDashboard.getDouble("B_Angle");
+		double turnangle = (currangle + b_angle- 90)/5.2;
+		SmartDashboard.putNumber("turntoangle", turnangle);
+	    turntoangle(turnangle);
+		double b_height = SmartDashboard.getDouble("B_Height");
+		if (b_height != 0) {
+			double b_distance = (10 * 270)/b_height;   //D = (H x F) / P
+			//ShooterPower = shooterSpeed.getSelected();
+			double curpower =  pdp.getVoltage();
+			ShooterPower = (0.25096*b_distance+54.455065)*(12/curpower)/100*.95; // shotpower = (0.25096*distance+54.455065)*(12/currpower)
+			SmartDashboard.putNumber("ShooterPower1", ShooterPower);
+		    	ShooterStarted = true;
+			//ShooterPower = .85; //set shooter power level
+			ShooterMotor.set(ShooterPower); 
+	    	Timer.delay(1);
+	    	ShooterStop.set(ShooterStopOpenLoc); //Shooter Servo location
+	    	//need to start conveyor
+	 	}
 	}
 	
 	public void autogear(){
-		double curangle = ahrs.getAngle();
-		double g_angle = SmartDashboard.getDouble("g_angle");
-		double shootangle = curangle - 90 + g_angle;
+		ahrs.reset();
+		double g_angle = SmartDashboard.getDouble("G_Angle");
+		double shootangle = 90 + g_angle;
 		double turnangle = shootangle;
 		turntoangle(turnangle);
-		double g_width = SmartDashboard.getDouble("g_width");
+		double g_width = SmartDashboard.getDouble("G_Width");
 		double g_distance = (10 * 270)/g_width;   //D = (H x F) / P
 		driveforward(g_distance);
 		opengears();
@@ -566,9 +570,9 @@ public class Robot extends IterativeRobot  implements PIDOutput {
         SmartDashboard.putNumber("rotateToAngleRate", rotateToAngleRate);
         SmartDashboard.putBoolean("onTarget", turnController.onTarget());
         SmartDashboard.putNumber("lowloc", lowloc);
-        SmartDashboard.putNumber("hiloc", hiloc);
+        SmartDashboard.putNumber("hiloc", hiloc); 
 	       
-        while(ahrs.getAngle() < lowloc || ahrs.getAngle() >hiloc){
+        while(ahrs.getAngle() < lowloc || ahrs.getAngle() >hiloc){ 
 	        SmartDashboard.putNumber("currloc", ahrs.getAngle());
 	        SmartDashboard.putNumber("rotateToAngleRate", rotateToAngleRate);
 	        SmartDashboard.putBoolean("onTarget", turnController.onTarget());
@@ -612,6 +616,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 
 	@Override
 	public void autonomousInit() {
+		
 		autoSelected = atomtype.getSelected();
 		gearSelected = DelGear.getSelected();
 		shotSelected = DelShot.getSelected();
@@ -621,11 +626,11 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 		switch (autoSelected) {
 		case "Red1":
 			ahrs.reset();
-			driveforward(105); // drive forward 48 inches ?
+			driveforward(150); // drive forward 48 inches ?
 			Timer.delay(1.0);		    //    for 2 seconds
-			turntoangle(30f);
-			Timer.delay(1.0);
-			driveforward(49);  // 50 for gear
+			turntoangle(36f);
+			Timer.delay(1.00);
+			driveforward(54);  // 50 for gear
 			if (gearSelected) {
 				opengears();
 	  		  	Timer.delay(0.5);
@@ -636,7 +641,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			
 		case "Red2":
 			ahrs.reset();
-			driveforward(109);
+			driveforward(145);
 			if (gearSelected) {
 				opengears();
 		  	  	Timer.delay(0.5);
@@ -652,11 +657,11 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 
 		case "Red3":
 			ahrs.reset();
-			driveforward(118);
+			driveforward(185);
 			Timer.delay(1.0);
-			turntoangle(-30f);
+			turntoangle(-39f);
 			Timer.delay(1.0);
-			driveforward(22);
+			driveforward(13);
 			if (gearSelected) {
 				opengears();
 		  	  	Timer.delay(0.5);
@@ -672,11 +677,11 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 
 		case "Blue1":
 			ahrs.reset();
-			driveforward(118); // drive forward 48 inches ?
+			driveforward(185); // drive forward 48 inches ?
 			Timer.delay(1.0);		    //    for 2 seconds
-			turntoangle(30f);
+			turntoangle(39f);
 			Timer.delay(1.0);
-			driveforward(22);  // 50 for gear
+			driveforward(13);  // 50 for gear
 			if (gearSelected) {
 				opengears();
 		  	  	Timer.delay(0.5);
@@ -685,14 +690,14 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			}
 			if (shotSelected) {
 				ahrs.reset();
-				turntoangle(80f);
+				turntoangle(40f);
 				autoshoot();
 			}
 			break;
 
 		case "Blue2":
 			ahrs.reset();
-			driveforward(109);
+			driveforward(145);
 			if (gearSelected) {
 				opengears();
 		  	  	Timer.delay(0.5);
@@ -701,21 +706,21 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 			}
 			if (shotSelected) {
 				ahrs.reset();
-				turntoangle(170f);
+				turntoangle(-100f);
 				autoshoot();
 			}
 			break;
 
 		case "Blue3":
 			ahrs.reset();
-			driveforward(105); 
+			driveforward(175); 
 			Timer.delay(1.0);
-			turntoangle(-30f);
+			turntoangle(-50f);
 			Timer.delay(1.0);
-			driveforward(49);
+			driveforward(53);
 			if (gearSelected) {
 				opengears();
-		  	  	Timer.delay(0.5);
+		  	  	Timer.delay(0.5); 
 		  	  	driveforward(-18);
 		  	  	closegears();
 			}
@@ -803,7 +808,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	        	  autoshoot();
 	          }
 	          if (stick.getRawButton(10)) {
-	        	  autogear();
+	        	  //autogear();
 	          }
 	          if (stick.getRawButton(11)) {
 	        	  reverseintake();
@@ -861,7 +866,7 @@ public class Robot extends IterativeRobot  implements PIDOutput {
 	 * This function is called periodically during test mode
 	 */
 	@Override 
-	public void testPeriodic() { 
+	public void testPeriodic() {   
 	}
 
 	@Override
